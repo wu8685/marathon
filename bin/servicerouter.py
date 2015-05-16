@@ -516,7 +516,7 @@ def writeConfig(config, config_file):
     fd, haproxyTempConfigFile = mkstemp()
     logger.debug("writing config to temp file %s", haproxyTempConfigFile)
     with os.fdopen(fd, 'w') as haproxyTempConfig:
-      haproxyTempConfig.write(config)
+        haproxyTempConfig.write(config)
 
     # Move into place
     logger.debug("moving temp file %s to %s", haproxyTempConfigFile, config_file)
