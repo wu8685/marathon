@@ -13,7 +13,7 @@ case class DiscoveryInfo(ports: Seq[DiscoveryInfo.Port] = Seq.empty) {
 }
 
 object DiscoveryInfo {
-  object Empty extends DiscoveryInfo
+  def empty: DiscoveryInfo = DiscoveryInfo()
 
   def fromProto(proto: Protos.DiscoveryInfo): DiscoveryInfo = {
     DiscoveryInfo(
@@ -22,7 +22,7 @@ object DiscoveryInfo {
   }
 
   case class Port(number: Int, name: String, protocol: String) {
-    require(protocol == "tcp" || protocol == "udp", "protocol can only be 'tcp' or 'udp'")
+    require(Port.AllowedProtocols(protocol), "protocol can only be 'tcp' or 'udp'")
 
     def toProto: MesosProtos.Port = {
       MesosProtos.Port.newBuilder
@@ -34,6 +34,8 @@ object DiscoveryInfo {
   }
 
   object Port {
+    val AllowedProtocols: Set[String] = Set("tcp", "udp")
+
     def fromProto(proto: MesosProtos.Port): Port = {
       Port(
         number = proto.getNumber,

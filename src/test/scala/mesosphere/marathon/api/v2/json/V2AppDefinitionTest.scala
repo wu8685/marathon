@@ -391,7 +391,7 @@ class V2AppDefinitionTest extends MarathonSpec with Matchers {
           "foo" -> "bar",
           "baz" -> "buzz"
         ),
-        discoveryInfo = DiscoveryInfo()
+        discoveryInfo = DiscoveryInfo.empty
       )),
       maxLaunchDelay = 3600.seconds
     )

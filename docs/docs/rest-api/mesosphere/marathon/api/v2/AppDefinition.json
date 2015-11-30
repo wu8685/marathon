@@ -251,7 +251,7 @@
                                         "pattern": "^[a-z][a-z0-9-]*$"
                                     },
                                     "protocol": {
-                                        "type": "string",
+                                        "enum": ["tcp", "udp"],
                                         "description": "Protocol of the port (one of ['tcp', 'udp'])."
                                     }
                                 }

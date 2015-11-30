@@ -212,14 +212,37 @@ trait ContainerFormats {
 trait IpAddressFormats {
   import Formats._
 
+  private[this] lazy val ValidPortProtocol: Reads[String] = {
+    implicitly[Reads[String]]
+      .filter(ValidationError("Invalid protocol. Only 'udp' or 'tcp' are allowed."))(
+        DiscoveryInfo.Port.AllowedProtocols
+      )
+  }
+
+  private[this] lazy val ValidPorts: Reads[Seq[DiscoveryInfo.Port]] = {
+    def hasUniquePortNames(ports: Seq[DiscoveryInfo.Port]): Boolean = {
+      ports.map(_.name).toSet.size == ports.size
+    }
+
+    def hasUniquePortNumberProtocol(ports: Seq[DiscoveryInfo.Port]): Boolean = {
+      ports.map(port => (port.number, port.protocol)).toSet.size == ports.size
+    }
+
+    implicitly[Reads[Seq[DiscoveryInfo.Port]]]
+      .filter(ValidationError("Port names are not unique."))(hasUniquePortNames)
+      .filter(ValidationError("There may be only one port with a particular port number/protocol combination."))(
+        hasUniquePortNumberProtocol
+      )
+  }
+
   implicit lazy val PortFormat: Format[DiscoveryInfo.Port] = (
     (__ \ "number").format[Int] ~
     (__ \ "name").format[String] ~
-    (__ \ "protocol").format[String]
+    (__ \ "protocol").format[String](ValidPortProtocol)
   )(DiscoveryInfo.Port(_, _, _), unlift(DiscoveryInfo.Port.unapply))
 
   implicit lazy val DiscoveryInfoFormat: Format[DiscoveryInfo] = Format(
-    (__ \ "ports").read[Seq[DiscoveryInfo.Port]].map(DiscoveryInfo(_)),
+    (__ \ "ports").read[Seq[DiscoveryInfo.Port]](ValidPorts).map(DiscoveryInfo(_)),
     Writes[DiscoveryInfo] { discoveryInfo =>
       Json.obj("ports" -> discoveryInfo.ports.map(PortFormat.writes))
     }
@@ -228,7 +251,7 @@ trait IpAddressFormats {
   implicit lazy val IpAddressFormat: Format[IpAddress] = (
     (__ \ "groups").formatNullable[Seq[String]].withDefault(Nil) ~
     (__ \ "labels").formatNullable[Map[String, String]].withDefault(Map.empty[String, String]) ~
-    (__ \ "discovery").formatNullable[DiscoveryInfo].withDefault(DiscoveryInfo.Empty)
+    (__ \ "discovery").formatNullable[DiscoveryInfo].withDefault(DiscoveryInfo.empty)
   )(IpAddress(_, _, _), unlift(IpAddress.unapply))
 }
 

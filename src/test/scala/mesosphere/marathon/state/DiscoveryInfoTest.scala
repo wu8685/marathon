@@ -5,7 +5,7 @@ import mesosphere.marathon.{ Protos, MarathonSpec }
 import mesosphere.marathon.api.JsonTestHelper
 import mesosphere.marathon.state.DiscoveryInfo.Port
 import org.scalatest.Matchers
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsPath, JsError, Json }
 import scala.collection.JavaConverters._
 
 class DiscoveryInfoTest extends MarathonSpec with Matchers {
@@ -16,6 +16,18 @@ class DiscoveryInfoTest extends MarathonSpec with Matchers {
 
     lazy val discoveryInfoWithPort = DiscoveryInfo(
       ports = Seq(Port(name = "http", number = 80, protocol = "tcp"))
+    )
+    lazy val discoveryInfoWithTwoPorts = DiscoveryInfo(
+      ports = Seq(
+        Port(name = "dns", number = 53, protocol = "udp"),
+        Port(name = "http", number = 80, protocol = "tcp")
+      )
+    )
+    lazy val discoveryInfoWithTwoPorts2 = DiscoveryInfo(
+      ports = Seq(
+        Port(name = "dnsudp", number = 53, protocol = "udp"),
+        Port(name = "dnstcp", number = 53, protocol = "tcp")
+      )
     )
   }
 
@@ -112,4 +124,90 @@ class DiscoveryInfoTest extends MarathonSpec with Matchers {
     assert(readResult == f.discoveryInfoWithPort)
   }
 
+  test("Read discovery info with two ports") {
+    val json =
+      """
+      {
+        "ports": [
+          { "name": "dns", "number": 53, "protocol": "udp" },
+          { "name": "http", "number": 80, "protocol": "tcp" }
+        ]
+      }
+      """
+
+    val readResult = fromJson(json)
+
+    val f = fixture()
+    assert(readResult == f.discoveryInfoWithTwoPorts)
+  }
+
+  test("Read discovery info with two ports with the same port number") {
+    val json =
+      """
+      {
+        "ports": [
+          { "name": "dnsudp", "number": 53, "protocol": "udp" },
+          { "name": "dnstcp", "number": 53, "protocol": "tcp" }
+        ]
+      }
+      """
+
+    val readResult = fromJson(json)
+
+    val f = fixture()
+    assert(readResult == f.discoveryInfoWithTwoPorts2)
+  }
+
+  test("Read discovery info with two ports with duplicate port/number") {
+    val json =
+      """
+      {
+        "ports": [
+          { "name": "dns1", "number": 53, "protocol": "udp" },
+          { "name": "dns2", "number": 53, "protocol": "udp" }
+        ]
+      }
+      """
+
+    val readResult = Json.fromJson[DiscoveryInfo](Json.parse(json))
+    readResult should be(JsError(
+      JsPath() \ "ports",
+      "There may be only one port with a particular port number/protocol combination.")
+    )
+  }
+
+  test("Read discovery info with two ports with duplicate name") {
+    val json =
+      """
+      {
+        "ports": [
+          { "name": "dns1", "number": 53, "protocol": "udp" },
+          { "name": "dns1", "number": 53, "protocol": "tcp" }
+        ]
+      }
+      """
+
+    val readResult = Json.fromJson[DiscoveryInfo](Json.parse(json))
+    readResult should be(JsError(
+      JsPath() \ "ports",
+      "Port names are not unique.")
+    )
+  }
+
+  test("Read discovery info with a port with an invalid protocol") {
+    val json =
+      """
+      {
+        "ports": [
+          { "name": "http", "number": 80, "protocol": "foo" }
+        ]
+      }
+      """
+
+    val readResult = Json.fromJson[DiscoveryInfo](Json.parse(json))
+    readResult should be(JsError(
+      (JsPath() \ "ports")(0) \ "protocol",
+      "Invalid protocol. Only 'udp' or 'tcp' are allowed.")
+    )
+  }
 }
