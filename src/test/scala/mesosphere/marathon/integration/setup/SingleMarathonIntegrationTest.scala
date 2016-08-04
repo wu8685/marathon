@@ -308,7 +308,7 @@ trait SingleMarathonIntegrationTest
 
   def waitForCleanSlateInMesos(): Boolean = {
     require(mesos.state.value.agents.size == 1, "one agent expected")
-    WaitTestSupport.waitUntil("clean slate in Mesos", 30.seconds) {
+    WaitTestSupport.waitUntil("clean slate in Mesos", 45.seconds) {
       val agent = mesos.state.value.agents.head
       val empty = agent.usedResources.isEmpty && agent.reservedResourcesByRole.isEmpty
       if (!empty) {
