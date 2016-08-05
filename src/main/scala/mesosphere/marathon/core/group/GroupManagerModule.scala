@@ -8,10 +8,10 @@ import akka.stream.Materializer
 import com.codahale.metrics.Gauge
 import mesosphere.marathon.core.group.impl.{ GroupManagerActor, GroupManagerDelegate }
 import mesosphere.marathon.core.leadership.LeadershipModule
-import mesosphere.marathon.core.storage.repository.{ GroupRepository, ReadOnlyAppRepository }
-import mesosphere.marathon.{ DeploymentService, MarathonConf }
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.storage.repository.{ GroupRepository, ReadOnlyAppRepository }
+import mesosphere.marathon.{ DeploymentService, MarathonConf }
 import mesosphere.util.CapConcurrentExecutions
 
 import scala.concurrent.Await

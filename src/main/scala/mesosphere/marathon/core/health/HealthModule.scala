@@ -2,13 +2,11 @@ package mesosphere.marathon.core.health
 
 import akka.actor.ActorSystem
 import akka.event.EventStream
+import mesosphere.marathon.ZookeeperConf
 import mesosphere.marathon.core.health.impl.MarathonHealthCheckManager
-import mesosphere.marathon.core.storage.repository.ReadOnlyAppRepository
 import mesosphere.marathon.core.task.termination.TaskKillService
-import mesosphere.marathon.ZookeeperConf
 import mesosphere.marathon.core.task.tracker.TaskTracker
-import mesosphere.marathon.core.task.termination.TaskKillService
-import mesosphere.marathon.ZookeeperConf
+import mesosphere.marathon.storage.repository.ReadOnlyAppRepository
 
 /**
   * Exposes everything related to a task health, including the health check manager.

@@ -10,13 +10,13 @@ import mesosphere.marathon.core.appinfo.AppInfo.Embed
 import mesosphere.marathon.core.appinfo._
 import mesosphere.marathon.core.base.ConstantClock
 import mesosphere.marathon.core.group.GroupManager
-import mesosphere.marathon.core.plugin.PluginManager
-import mesosphere.marathon.core.storage.repository.{ AppRepository, GroupRepository, TaskFailureRepository }
-import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.core.health.HealthCheckManager
+import mesosphere.marathon.core.plugin.PluginManager
+import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.state.AppDefinition.VersionInfo.OnlyVersion
 import mesosphere.marathon.state.PathId._
 import mesosphere.marathon.state._
+import mesosphere.marathon.storage.repository.{ AppRepository, GroupRepository, TaskFailureRepository }
 import mesosphere.marathon.test.{ MarathonActorSupport, Mockito }
 import mesosphere.marathon.upgrade.DeploymentPlan
 import org.apache.mesos.{ Protos => Mesos }

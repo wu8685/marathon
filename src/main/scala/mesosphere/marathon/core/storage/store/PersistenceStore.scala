@@ -22,6 +22,9 @@ import scala.concurrent.Future
   *    the following implicits should be sufficient.
   *  - While the implicits can be in the companion object, they may be best suited in a trait mixed
   *    into the according Repository.
+  *  - Extend [[mesosphere.marathon.core.storage.repository.impl.PersistenceStoreRepository]] or
+  *    [[mesosphere.marathon.core.storage.repository.impl.PersistenceStoreVersionedRepository]] and mix
+  *    in the implicits needed.
   * {{{
   *   case class A(id: Int, name: String, version: OffsetDateTime)
   *   object A {
@@ -90,10 +93,10 @@ trait PersistenceStore[K, Category, Serialized] {
   def versions[Id, V](id: Id)(implicit ir: IdResolver[Id, V, Category, K]): Source[OffsetDateTime, NotUsed]
 
   /** Get the current version of the storage */
-  private[storage] def storageVersion(): Future[Option[StorageVersion]]
+  def storageVersion(): Future[Option[StorageVersion]]
 
   /** Update the version of the storage */
-  private[storage] def setStorageVersion(storageVersion: StorageVersion): Future[Done]
+  def setStorageVersion(storageVersion: StorageVersion): Future[Done]
 
   /**
     * Get the current version of the data, if any, for the given primary id and value type.

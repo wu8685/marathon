@@ -10,16 +10,15 @@ import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.leadership.AlwaysElectedLeadershipModule
 import mesosphere.marathon.core.readiness.ReadinessCheckExecutor
-import mesosphere.marathon.core.storage.repository.AppRepository
-import mesosphere.marathon.core.storage.repository.impl.legacy.AppEntityRepository
-import mesosphere.marathon.core.storage.repository.impl.legacy.store.{ InMemoryStore, MarathonStore }
-import mesosphere.marathon.core.task.termination.TaskKillService
 import mesosphere.marathon.core.task.termination.TaskKillService
 import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.PathId._
 import mesosphere.marathon.state.{ AppDefinition, Group }
+import mesosphere.marathon.storage.repository.AppRepository
+import mesosphere.marathon.storage.repository.legacy.AppEntityRepository
+import mesosphere.marathon.storage.repository.legacy.store.{ InMemoryStore, MarathonStore }
 import mesosphere.marathon.test.{ MarathonActorSupport, Mockito }
 import mesosphere.marathon.upgrade.DeploymentActor.Cancel
 import mesosphere.marathon.upgrade.DeploymentManager.{ CancelDeployment, DeploymentFailed, PerformDeployment, StopAllDeployments }

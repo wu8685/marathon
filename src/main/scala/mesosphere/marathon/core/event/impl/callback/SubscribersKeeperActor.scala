@@ -4,14 +4,15 @@ import akka.actor.{ Actor, ActorLogging }
 import akka.pattern.pipe
 import mesosphere.marathon.core.event.impl.callback.SubscribersKeeperActor._
 import mesosphere.marathon.core.event.{ EventSubscribers, MarathonSubscriptionEvent, Subscribe, Unsubscribe }
-import mesosphere.marathon.core.storage.repository.EventSubscribersRepository
+import mesosphere.marathon.storage.repository.EventSubscribersRepository
 import mesosphere.util.LockManager
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.async.Async.{ async, await }
+import scala.concurrent.{ ExecutionContext, Future }
 
 class SubscribersKeeperActor(val store: EventSubscribersRepository) extends Actor with ActorLogging {
   private val lockManager = LockManager.create()
+  private val LockName = "subscribers"
   override def receive: Receive = {
 
     case event @ Subscribe(_, callbackUrl, _, _) =>
@@ -47,7 +48,7 @@ class SubscribersKeeperActor(val store: EventSubscribersRepository) extends Acto
   }
 
   protected[this] def add(callbackUrl: String): Future[EventSubscribers] =
-    lockManager.executeSequentially("") {
+    lockManager.executeSequentially(LockName) {
       async {
         val subscribers = await(store.get()).getOrElse(EventSubscribers())
         val updated = if (subscribers.urls.contains(callbackUrl)) {
@@ -63,7 +64,7 @@ class SubscribersKeeperActor(val store: EventSubscribersRepository) extends Acto
     }(ExecutionContext.global) // blocks a thread, don't block the actor.
 
   protected[this] def remove(callbackUrl: String): Future[EventSubscribers] =
-    lockManager.executeSequentially("") {
+    lockManager.executeSequentially(LockName) {
       async {
         val subscribers = await(store.get()).getOrElse(EventSubscribers())
         val updated = if (subscribers.urls.contains(callbackUrl)) {

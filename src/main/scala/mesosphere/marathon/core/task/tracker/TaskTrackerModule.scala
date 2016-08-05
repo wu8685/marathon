@@ -4,10 +4,10 @@ import akka.actor.ActorRef
 import akka.stream.Materializer
 import mesosphere.marathon.core.base.Clock
 import mesosphere.marathon.core.leadership.LeadershipModule
-import mesosphere.marathon.core.storage.repository.TaskRepository
 import mesosphere.marathon.core.task.tracker.impl._
 import mesosphere.marathon.core.task.update.TaskUpdateStep
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.storage.repository.TaskRepository
 
 /**
   * Provides the interfaces to query the current task state ([[TaskTracker]]) and to

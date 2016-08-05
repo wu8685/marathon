@@ -1,8 +1,8 @@
 package mesosphere.marathon.core.task.tracker.impl
 
 import akka.stream.Materializer
-import mesosphere.marathon.core.storage.repository.TaskRepository
 import mesosphere.marathon.core.task.tracker.TaskTracker
+import mesosphere.marathon.storage.repository.TaskRepository
 import mesosphere.marathon.stream.Sink
 import org.slf4j.LoggerFactory
 

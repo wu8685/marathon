@@ -10,13 +10,13 @@ import mesosphere.marathon.MarathonSchedulerActor.ScaleApp
 import mesosphere.marathon.api.v2.json.AppUpdate
 import mesosphere.marathon.core.election.{ ElectionService, LocalLeadershipEvent }
 import mesosphere.marathon.core.event.{ AppTerminatedEvent, DeploymentFailed, DeploymentSuccess }
+import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.core.storage.repository.{ DeploymentRepository, GroupRepository, ReadOnlyAppRepository }
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.termination.{ TaskKillReason, TaskKillService }
 import mesosphere.marathon.core.task.tracker.TaskTracker
-import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.state._
+import mesosphere.marathon.storage.repository.{ DeploymentRepository, GroupRepository, ReadOnlyAppRepository }
 import mesosphere.marathon.stream.Sink
 import mesosphere.marathon.upgrade.DeploymentManager._
 import mesosphere.marathon.upgrade.{ DeploymentManager, DeploymentPlan, UpgradeConfig }

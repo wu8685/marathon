@@ -2,14 +2,14 @@ package mesosphere.marathon.api.v2
 
 import java.util.Collections
 
-import mesosphere.marathon.api.{ TestAuthFixture, TestGroupManagerFixture }
 import mesosphere.marathon.api.v2.json.Formats._
 import mesosphere.marathon.api.v2.json.GroupUpdate
+import mesosphere.marathon.api.{ TestAuthFixture, TestGroupManagerFixture }
 import mesosphere.marathon.core.appinfo._
-import mesosphere.marathon.core.storage.repository.GroupRepository
 import mesosphere.marathon.core.group.GroupManager
 import mesosphere.marathon.state.PathId._
 import mesosphere.marathon.state._
+import mesosphere.marathon.storage.repository.GroupRepository
 import mesosphere.marathon.test.Mockito
 import mesosphere.marathon.{ ConflictingChangeException, MarathonConf, MarathonSpec, UnknownGroupException }
 import org.scalatest.{ GivenWhenThen, Matchers }

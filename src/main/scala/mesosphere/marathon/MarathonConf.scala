@@ -8,13 +8,13 @@ import mesosphere.marathon.core.launcher.OfferProcessorConfig
 import mesosphere.marathon.core.launchqueue.LaunchQueueConfig
 import mesosphere.marathon.core.matcher.manager.OfferMatcherManagerConfig
 import mesosphere.marathon.core.plugin.PluginManagerConfiguration
-import mesosphere.marathon.core.storage.StorageConf
 import mesosphere.marathon.core.task.jobs.TaskJobsConfig
 import mesosphere.marathon.core.task.termination.TaskKillConfig
 import mesosphere.marathon.core.task.tracker.TaskTrackerConfig
 import mesosphere.marathon.core.task.update.TaskStatusUpdateConfig
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.state.ResourceRole
+import mesosphere.marathon.storage.StorageConf
 import mesosphere.marathon.upgrade.UpgradeConfig
 import org.rogach.scallop.ScallopConf
 

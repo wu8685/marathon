@@ -1,6 +1,7 @@
 package mesosphere.marathon.core.storage.store.impl.zk
 
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 import akka.actor.{ ActorRefFactory, Scheduler }
@@ -11,9 +12,9 @@ import akka.{ Done, NotUsed }
 import com.typesafe.scalalogging.StrictLogging
 import mesosphere.marathon.Protos.{ StorageVersion, ZKStoreEntry }
 import mesosphere.marathon.StoreCommandFailedException
-import mesosphere.marathon.core.storage.migration.Migration
 import mesosphere.marathon.core.storage.store.impl.{ BasePersistenceStore, CategorizedKey }
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.storage.migration.Migration
 import mesosphere.marathon.util.{ Retry, Timeout, toRichFuture }
 import mesosphere.util.{ CapConcurrentExecutions, CapConcurrentExecutionsMetrics }
 import org.apache.zookeeper.KeeperException
@@ -26,6 +27,20 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success }
+
+case class ZkId(category: String, id: String, version: Option[OffsetDateTime]) {
+  private val bucket = math.abs(id.hashCode % ZkId.HashBucketSize)
+  def path: String = version.fold(f"/$category/$bucket%x/$id") { v =>
+    f"/$category/$bucket%x/$id/${ZkId.DateFormat.format(v)}"
+  }
+}
+
+object ZkId {
+  val DateFormat = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+  val HashBucketSize = 16
+}
+
+case class ZkSerialized(bytes: ByteString)
 
 class ZkPersistenceStore(
     val client: RichCuratorFramework,
@@ -60,7 +75,7 @@ class ZkPersistenceStore(
       }
     }
 
-  override private[storage] def storageVersion(): Future[Option[StorageVersion]] =
+  override def storageVersion(): Future[Option[StorageVersion]] =
     retry("ZkPersistenceStore::storageVersion") {
       async {
         await(client.data(s"/${Migration.StorageVersionName}").asTry) match {
@@ -78,7 +93,7 @@ class ZkPersistenceStore(
     }
 
   /** Update the version of the storage */
-  override private[storage] def setStorageVersion(storageVersion: StorageVersion): Future[Done] =
+  override def setStorageVersion(storageVersion: StorageVersion): Future[Done] =
     retry(s"ZkPersistenceStore::setStorageVersion($storageVersion)") {
       async {
         val path = s"/${Migration.StorageVersionName}"

@@ -7,9 +7,9 @@ import akka.event.EventStream
 import com.codahale.metrics.MetricRegistry
 import mesosphere.marathon.core.group.{ GroupManager, GroupManagerModule }
 import mesosphere.marathon.core.leadership.AlwaysElectedLeadershipModule
-import mesosphere.marathon.core.storage.repository.{ AppRepository, GroupRepository }
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.storage.repository.{ AppRepository, GroupRepository }
 import mesosphere.marathon.test.{ MarathonActorSupport, Mockito }
 import mesosphere.marathon.{ AllConf, DeploymentService, MarathonConf, MarathonSchedulerService }
 import mesosphere.util.{ CapConcurrentExecutions, CapConcurrentExecutionsMetrics }

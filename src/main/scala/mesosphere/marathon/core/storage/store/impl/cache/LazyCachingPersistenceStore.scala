@@ -28,17 +28,17 @@ import scala.concurrent.{ ExecutionContext, Future }
   * @tparam Serialized The serialized format for the persistence store.
   */
 class LazyCachingPersistenceStore[K, Category, Serialized](
-    private[storage] val store: BasePersistenceStore[K, Category, Serialized])(implicit
+    val store: BasePersistenceStore[K, Category, Serialized])(implicit
   mat: Materializer,
     ctx: ExecutionContext) extends PersistenceStore[K, Category, Serialized] with StrictLogging {
 
-  val lockManager = LockManager.create()
+  private val lockManager = LockManager.create()
   private[store] val idCache = TrieMap.empty[Category, Seq[Any]]
   private[store] val valueCache = TrieMap.empty[K, Option[Any]]
 
-  override private[storage] def storageVersion(): Future[Option[StorageVersion]] = store.storageVersion()
+  override def storageVersion(): Future[Option[StorageVersion]] = store.storageVersion()
 
-  override private[storage] def setStorageVersion(storageVersion: StorageVersion): Future[Done] =
+  override def setStorageVersion(storageVersion: StorageVersion): Future[Done] =
     store.setStorageVersion(storageVersion)
 
   override def ids[Id, V]()(implicit ir: IdResolver[Id, V, Category, K]): Source[Id, NotUsed] = {

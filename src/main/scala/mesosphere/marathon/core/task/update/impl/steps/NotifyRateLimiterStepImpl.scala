@@ -2,11 +2,11 @@ package mesosphere.marathon.core.task.update.impl.steps
 
 import com.google.inject.{ Inject, Provider }
 import mesosphere.marathon.core.launchqueue.LaunchQueue
-import mesosphere.marathon.core.storage.repository.ReadOnlyAppRepository
 import mesosphere.marathon.core.task.bus.TaskChangeObservables.TaskChanged
 import mesosphere.marathon.core.task.state.MarathonTaskStatus
 import mesosphere.marathon.core.task.update.TaskUpdateStep
 import mesosphere.marathon.core.task.{ Task, TaskStateOp }
+import mesosphere.marathon.storage.repository.ReadOnlyAppRepository
 import org.apache.mesos.Protos.TaskStatus
 
 import scala.concurrent.Future

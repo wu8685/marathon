@@ -36,7 +36,7 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
   * @tparam Serialized The serialized format for the persistence store.
   */
 class LoadTimeCachingPersistenceStore[K, Category, Serialized](
-    private[storage] val store: BasePersistenceStore[K, Category, Serialized],
+    val store: BasePersistenceStore[K, Category, Serialized],
     maxPreloadRequests: Int = 8)(
     implicit
     mat: Materializer,
@@ -50,9 +50,9 @@ class LoadTimeCachingPersistenceStore[K, Category, Serialized](
   private[store] var valueCache: Future[TrieMap[K, Either[Serialized, Any]]] =
     Future.failed(new NotActiveException())
 
-  override private[storage] def storageVersion(): Future[Option[StorageVersion]] = store.storageVersion()
+  override def storageVersion(): Future[Option[StorageVersion]] = store.storageVersion()
 
-  override private[storage] def setStorageVersion(storageVersion: StorageVersion): Future[Done] =
+  override def setStorageVersion(storageVersion: StorageVersion): Future[Done] =
     store.setStorageVersion(storageVersion)
 
   override def preDriverStarts: Future[Unit] = {

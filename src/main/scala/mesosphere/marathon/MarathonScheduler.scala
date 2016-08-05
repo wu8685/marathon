@@ -7,8 +7,8 @@ import akka.event.EventStream
 import mesosphere.marathon.core.base.{ Clock, CurrentRuntime }
 import mesosphere.marathon.core.event.{ SchedulerRegisteredEvent, _ }
 import mesosphere.marathon.core.launcher.OfferProcessor
-import mesosphere.marathon.core.storage.repository.FrameworkIdRepository
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
+import mesosphere.marathon.storage.repository.FrameworkIdRepository
 import mesosphere.util.state.{ FrameworkId, MesosLeaderInfo }
 import org.apache.mesos.Protos._
 import org.apache.mesos.{ Scheduler, SchedulerDriver }

@@ -11,15 +11,14 @@ import mesosphere.marathon._
 import mesosphere.marathon.core.base.ConstantClock
 import mesosphere.marathon.core.health.{ Health, HealthCheck }
 import mesosphere.marathon.core.leadership.{ AlwaysElectedLeadershipModule, LeadershipModule }
-import mesosphere.marathon.core.storage.repository.AppRepository
 import mesosphere.marathon.core.storage.store.impl.memory.InMemoryPersistenceStore
-import mesosphere.marathon.core.task.termination.TaskKillService
 import mesosphere.marathon.core.task.termination.TaskKillService
 import mesosphere.marathon.core.task.tracker.{ TaskCreationHandler, TaskStateOpProcessor, TaskTracker }
 import mesosphere.marathon.core.task.{ Task, TaskStateOp }
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.PathId.StringPathId
 import mesosphere.marathon.state._
+import mesosphere.marathon.storage.repository.AppRepository
 import mesosphere.marathon.test.{ CaptureEvents, MarathonShutdownHookSupport }
 import mesosphere.util.Logging
 import org.apache.mesos.{ Protos => mesos }

@@ -13,8 +13,8 @@ import mesosphere.marathon.api.serialization.LabelsSerializer
 import mesosphere.marathon.core.base.Clock
 import mesosphere.marathon.core.launcher.impl.{ ReservationLabels, TaskLabels }
 import mesosphere.marathon.core.leadership.LeadershipModule
-import mesosphere.marathon.core.storage.repository.impl.legacy.TaskEntityRepository
-import mesosphere.marathon.core.storage.repository.impl.legacy.store.{ InMemoryStore, MarathonStore, PersistentStore }
+import mesosphere.marathon.storage.repository.legacy.TaskEntityRepository
+import mesosphere.marathon.storage.repository.legacy.store.{ InMemoryStore, MarathonStore, PersistentStore }
 import mesosphere.marathon.core.task.bus.TaskStatusUpdateTestHelper
 import mesosphere.marathon.core.task.tracker.{ TaskTracker, TaskTrackerModule }
 import mesosphere.marathon.core.task.state.MarathonTaskStatus

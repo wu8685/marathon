@@ -12,11 +12,11 @@ import mesosphere.marathon.core.launchqueue.LaunchQueueModule
 import mesosphere.marathon.core.leadership.LeadershipModule
 import mesosphere.marathon.core.plugin.PluginModule
 import mesosphere.marathon.core.readiness.ReadinessModule
-import mesosphere.marathon.core.storage.StorageModule
 import mesosphere.marathon.core.task.bus.TaskBusModule
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
 import mesosphere.marathon.core.task.termination.TaskTerminationModule
 import mesosphere.marathon.core.task.tracker.TaskTrackerModule
+import mesosphere.marathon.storage.StorageModule
 
 /**
   * The exported interface of the [[CoreModuleImpl]].

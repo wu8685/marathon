@@ -11,11 +11,11 @@ import akka.util.ByteString
 import com.codahale.metrics.MetricRegistry
 import com.twitter.zk.ZNode
 import mesosphere.AkkaUnitTest
-import mesosphere.marathon.core.storage.migration.{ Migration, StorageVersions }
-import mesosphere.marathon.core.storage.repository.impl.legacy.store.{ CompressionConf, ZKStore }
 import mesosphere.marathon.core.storage.store.{ IdResolver, PersistenceStoreTest, TestClass1 }
 import mesosphere.marathon.integration.setup.ZookeeperServerTest
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.storage.migration.{ Migration, StorageVersions }
+import mesosphere.marathon.storage.repository.legacy.store.{ CompressionConf, ZKStore }
 
 import scala.concurrent.duration._
 import scala.util.Random

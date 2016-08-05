@@ -3,12 +3,12 @@ package mesosphere.marathon.core.appinfo.impl
 import mesosphere.marathon.MarathonSchedulerService
 import mesosphere.marathon.core.appinfo.{ AppInfo, EnrichedTask, TaskCounts, TaskStatsByVersion }
 import mesosphere.marathon.core.base.Clock
+import mesosphere.marathon.core.health.{ Health, HealthCheckManager }
 import mesosphere.marathon.core.readiness.ReadinessCheckResult
-import mesosphere.marathon.core.storage.repository.TaskFailureRepository
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.task.tracker.TaskTracker
-import mesosphere.marathon.core.health.{ Health, HealthCheckManager }
 import mesosphere.marathon.state._
+import mesosphere.marathon.storage.repository.TaskFailureRepository
 import mesosphere.marathon.upgrade.DeploymentManager.DeploymentStepInfo
 import mesosphere.marathon.upgrade.DeploymentPlan
 import org.slf4j.LoggerFactory

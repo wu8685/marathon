@@ -2,6 +2,9 @@ package mesosphere.marathon.core
 
 import javax.inject.Named
 
+import mesosphere.marathon.storage.migration.Migration
+import mesosphere.marathon.storage.repository._
+
 // scalastyle:off
 import akka.actor.{ ActorRef, ActorRefFactory, Props }
 import akka.stream.Materializer
@@ -18,13 +21,11 @@ import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.leadership.{ LeadershipCoordinator, LeadershipModule }
 import mesosphere.marathon.core.plugin.{ PluginDefinitions, PluginManager }
 import mesosphere.marathon.core.readiness.ReadinessCheckExecutor
-import mesosphere.marathon.core.storage.migration.Migration
-import mesosphere.marathon.core.storage.repository.{ DeploymentRepository, FrameworkIdRepository, GroupRepository, ReadOnlyAppRepository, TaskFailureRepository }
 import mesosphere.marathon.core.task.bus.{ TaskChangeObservables, TaskStatusEmitter }
 import mesosphere.marathon.core.task.jobs.TaskJobsModule
 import mesosphere.marathon.core.task.termination.TaskKillService
 import mesosphere.marathon.core.task.tracker.{ TaskCreationHandler, TaskStateOpProcessor, TaskTracker }
-import mesosphere.marathon.core.task.update.impl.steps.{ ContinueOnErrorStep, NotifyHealthCheckManagerStepImpl, NotifyLaunchQueueStepImpl, NotifyRateLimiterStepImpl, PostToEventStreamStepImpl, ScaleAppUpdateStepImpl, TaskStatusEmitterPublishStepImpl }
+import mesosphere.marathon.core.task.update.impl.steps._
 import mesosphere.marathon.core.task.update.impl.{ TaskStatusUpdateProcessorImpl, ThrottlingTaskStatusUpdateProcessor }
 import mesosphere.marathon.core.task.update.{ TaskStatusUpdateProcessor, TaskUpdateStep }
 import mesosphere.marathon.metrics.Metrics
@@ -33,6 +34,7 @@ import mesosphere.marathon.plugin.http.HttpRequestHandler
 import mesosphere.marathon.{ MarathonConf, ModuleNames, PrePostDriverCallback }
 import mesosphere.util.{ CapConcurrentExecutions, CapConcurrentExecutionsMetrics }
 import org.eclipse.jetty.servlets.EventSourceServlet
+
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 // scalastyle:on

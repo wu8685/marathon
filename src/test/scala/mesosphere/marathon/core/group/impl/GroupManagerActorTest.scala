@@ -12,11 +12,11 @@ import akka.testkit.TestActorRef
 import akka.util.Timeout
 import com.codahale.metrics.MetricRegistry
 import mesosphere.marathon.core.group.GroupManager
-import mesosphere.marathon.core.storage.repository.{ AppRepository, GroupRepository }
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.PathId._
 import mesosphere.marathon.state._
+import mesosphere.marathon.storage.repository.{ AppRepository, GroupRepository }
 import mesosphere.marathon.test.Mockito
 import mesosphere.marathon.{ MarathonConf, MarathonSchedulerService, MarathonSpec, PortRangeExhaustedException, _ }
 import mesosphere.util.{ CapConcurrentExecutions, CapConcurrentExecutionsMetrics }

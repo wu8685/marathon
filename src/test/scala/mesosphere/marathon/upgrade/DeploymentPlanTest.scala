@@ -12,8 +12,8 @@ import mesosphere.marathon.test.Mockito
 import org.apache.mesos.{ Protos => mesos }
 import org.scalatest.{ GivenWhenThen, Matchers }
 import com.wix.accord._
-import mesosphere.marathon.core.storage.TwitterZk
 import mesosphere.marathon.state.Container.Docker.PortMapping
+import mesosphere.marathon.storage.TwitterZk
 
 import scala.collection.immutable.Seq
 

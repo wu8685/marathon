@@ -11,11 +11,11 @@ import mesosphere.marathon.core.election.ElectionService
 import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.heartbeat._
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
-import mesosphere.marathon.core.storage.migration.Migration
-import mesosphere.marathon.core.storage.repository.{ AppRepository, FrameworkIdRepository }
 import mesosphere.marathon.core.storage.store.impl.memory.InMemoryPersistenceStore
 import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.metrics.Metrics
+import mesosphere.marathon.storage.migration.Migration
+import mesosphere.marathon.storage.repository.{ AppRepository, FrameworkIdRepository }
 import mesosphere.marathon.test.MarathonActorSupport
 import mesosphere.util.state.FrameworkId
 import org.apache.mesos.{ SchedulerDriver, Protos => mesos }

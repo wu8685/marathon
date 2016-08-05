@@ -12,14 +12,14 @@ import com.codahale.metrics.MetricRegistry
 import com.google.common.util.concurrent.AbstractExecutionThreadService
 import mesosphere.marathon.MarathonSchedulerActor._
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
+import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.heartbeat._
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
-import mesosphere.marathon.core.storage.migration.Migration
-import mesosphere.marathon.core.storage.repository.{ FrameworkIdRepository, ReadOnlyAppRepository }
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.{ AppDefinition, PathId, Timestamp }
+import mesosphere.marathon.storage.migration.Migration
+import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, ReadOnlyAppRepository }
 import mesosphere.marathon.stream.Sink
 import mesosphere.marathon.upgrade.DeploymentManager.{ CancelDeployment, DeploymentStepInfo }
 import mesosphere.marathon.upgrade.DeploymentPlan

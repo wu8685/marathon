@@ -4,17 +4,15 @@ import akka.Done
 import akka.stream.scaladsl.Source
 import akka.testkit.TestProbe
 import mesosphere.marathon.core.base.ConstantClock
+import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.launchqueue.LaunchQueue.QueuedTaskInfo
-import mesosphere.marathon.core.task.termination.{ TaskKillReason, TaskKillService }
-import mesosphere.marathon.core.storage.repository.{ AppRepository, GroupRepository }
-import mesosphere.marathon.core.task.termination.{ TaskKillReason, TaskKillService }
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.core.task.termination.{ TaskKillReason, TaskKillService }
 import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.core.task.tracker.TaskTracker.{ AppTasks, TasksByApp }
 import mesosphere.marathon.state.{ AppDefinition, PathId }
-import mesosphere.marathon.core.health.HealthCheckManager
-import mesosphere.marathon.state.{ AppDefinition, PathId }
+import mesosphere.marathon.storage.repository.{ AppRepository, GroupRepository }
 import mesosphere.marathon.test.{ MarathonActorSupport, Mockito }
 import org.apache.mesos.Protos.{ TaskID, TaskState, TaskStatus }
 import org.apache.mesos.SchedulerDriver

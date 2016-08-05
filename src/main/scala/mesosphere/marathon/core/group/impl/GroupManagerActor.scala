@@ -11,11 +11,11 @@ import akka.stream.scaladsl.Sink
 import mesosphere.marathon._
 import mesosphere.marathon.api.v2.Validation._
 import mesosphere.marathon.core.event.{ GroupChangeFailed, GroupChangeSuccess }
-import mesosphere.marathon.core.storage.repository.{ GroupRepository, ReadOnlyAppRepository }
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.io.PathFun
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.state.{ AppDefinition, Container, PortDefinition, _ }
+import mesosphere.marathon.storage.repository.{ GroupRepository, ReadOnlyAppRepository }
 import mesosphere.marathon.upgrade.{ DeploymentPlan, GroupVersioningUtil, ResolveArtifacts }
 import mesosphere.util.CapConcurrentExecutions
 import org.slf4j.LoggerFactory

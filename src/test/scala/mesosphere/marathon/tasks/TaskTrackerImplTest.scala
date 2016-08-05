@@ -6,8 +6,8 @@ import mesosphere.marathon.core.base.ConstantClock
 import mesosphere.marathon.core.task.{ Task, TaskStateOp }
 import mesosphere.marathon.{ MarathonSpec, MarathonTestHelper }
 import mesosphere.marathon.core.leadership.AlwaysElectedLeadershipModule
-import mesosphere.marathon.core.storage.repository.impl.legacy.TaskEntityRepository
-import mesosphere.marathon.core.storage.repository.impl.legacy.store.{ InMemoryStore, PersistentStore }
+import mesosphere.marathon.storage.repository.legacy.TaskEntityRepository
+import mesosphere.marathon.storage.repository.legacy.store.{ InMemoryStore, PersistentStore }
 import mesosphere.marathon.core.task.tracker.{ TaskStateOpProcessor, TaskTracker }
 import mesosphere.marathon.core.task.{ Task, TaskStateOp }
 import mesosphere.marathon.metrics.Metrics
