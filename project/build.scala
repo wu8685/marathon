@@ -148,6 +148,7 @@ object MarathonBuild extends Build {
     ),
     cancelable in Global := true,
     fork in Test := true,
+    fork in IntegrationTest := false,
     javaOptions += "-Xmx4G"
   )
 
@@ -317,7 +318,7 @@ object Dependency {
     val Guava = "19.0"
     // FIXME (gkleiman): reenable deprecation checks after Mesos 1.0.0-rc2 deprecations are handled
     val MesosUtils = "1.0.0"
-    val Akka = "2.4.7"
+    val Akka = "2.4.8"
     val AsyncAwait = "0.9.6-RC2"
     val Spray = "1.3.3"
     val TwitterCommons = "0.0.76"
@@ -340,13 +341,13 @@ object Dependency {
     val Logback = "1.1.3"
     val Logstash = "4.7"
     val WixAccord = "0.5"
-    val Curator = "2.10.0"
+    val Curator = "2.11.0"
     val Java8Compat = "0.8.0-RC1"
     val ScalaLogging = "3.4.0"
 
     // test deps versions
     val Mockito = "1.10.19"
-    val ScalaTest = "2.2.6"
+    val ScalaTest = "3.0.0"
     val JUnit = "4.12"
     val ScalaMeter = "0.7"
   }

@@ -17,6 +17,7 @@ import mesosphere.marathon.state.{ AppDefinition, PathId, Timestamp }
 import mesosphere.marathon.storage.repository.legacy.store.{ CompressionConf, EntityStore, InMemoryStore, MarathonStore, PersistentStore, ZKStore }
 import mesosphere.marathon.stream.Sink
 import org.scalatest.GivenWhenThen
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 
 import scala.concurrent.duration._
 
@@ -161,7 +162,7 @@ class RepositoryTest extends AkkaUnitTest with ZookeeperServerTest with GivenWhe
     val client = twitterZkClient()
     val persistentStore = new ZKStore(client, ZNode(client, s"/${UUID.randomUUID().toString}"),
       CompressionConf(true, 64 * 1024), 8, 1024)
-    persistentStore.initialize().futureValue(PatienceConfig(5.seconds, 10.millis))
+    persistentStore.initialize().futureValue(Timeout(5.seconds))
     persistentStore
   }
 

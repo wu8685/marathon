@@ -16,6 +16,7 @@ import mesosphere.marathon.integration.setup.ZookeeperServerTest
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.storage.migration.{ Migration, StorageVersions }
 import mesosphere.marathon.storage.repository.legacy.store.{ CompressionConf, ZKStore }
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -65,7 +66,7 @@ class ZkPersistenceStoreTest extends AkkaUnitTest
 
   def defaultStore: ZkPersistenceStore = {
     val root = UUID.randomUUID().toString
-    rootClient.create(s"/$root").futureValue(PatienceConfig(5.seconds, 10.millis))
+    rootClient.create(s"/$root").futureValue(Timeout(5.seconds))
     implicit val metrics = new Metrics(new MetricRegistry)
     new ZkPersistenceStore(rootClient.usingNamespace(root), Duration.Inf)
   }
@@ -75,7 +76,7 @@ class ZkPersistenceStoreTest extends AkkaUnitTest
   it should {
     "be able to read the storage version from the old store format" in {
       val root = UUID.randomUUID().toString
-      rootClient.create(s"/$root").futureValue(PatienceConfig(5.seconds, 10.millis))
+      rootClient.create(s"/$root").futureValue(Timeout(5.seconds))
       implicit val metrics = new Metrics(new MetricRegistry)
       val newStore = new ZkPersistenceStore(rootClient.usingNamespace(root), Duration.Inf)
       val twitterClient = twitterZkClient()
