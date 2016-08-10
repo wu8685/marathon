@@ -5,8 +5,6 @@ import com.wix.accord.dsl._
 import mesosphere.marathon.state._
 import mesosphere.marathon.api.v2.Validation._
 
-import scala.reflect.ClassTag
-
 case class GroupUpdate(
     id: Option[PathId],
     apps: Option[Set[AppDefinition]] = None,

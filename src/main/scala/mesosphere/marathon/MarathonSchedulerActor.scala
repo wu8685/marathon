@@ -3,34 +3,34 @@ package mesosphere.marathon
 import java.util.concurrent.TimeoutException
 
 import akka.actor._
-import akka.event.{ EventStream, LoggingReceive }
+import akka.event.{EventStream, LoggingReceive}
 import akka.pattern.ask
 import akka.stream.Materializer
 import mesosphere.marathon.MarathonSchedulerActor.ScaleApp
 import mesosphere.marathon.api.v2.json.AppUpdate
-import mesosphere.marathon.core.election.{ ElectionService, LocalLeadershipEvent }
-import mesosphere.marathon.core.event.{ AppTerminatedEvent, DeploymentFailed, DeploymentSuccess }
+import mesosphere.marathon.core.election.{ElectionService, LocalLeadershipEvent}
+import mesosphere.marathon.core.event.{AppTerminatedEvent, DeploymentFailed, DeploymentSuccess}
 import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.core.task.termination.{ TaskKillReason, TaskKillService }
+import mesosphere.marathon.core.task.termination.{TaskKillReason, TaskKillService}
 import mesosphere.marathon.core.task.tracker.TaskTracker
 import mesosphere.marathon.state._
-import mesosphere.marathon.storage.repository.{ DeploymentRepository, GroupRepository, ReadOnlyAppRepository }
+import mesosphere.marathon.storage.repository.{DeploymentRepository, GroupRepository, ReadOnlyAppRepository}
 import mesosphere.marathon.stream.Sink
 import mesosphere.marathon.upgrade.DeploymentManager._
-import mesosphere.marathon.upgrade.{ DeploymentManager, DeploymentPlan, UpgradeConfig }
-import org.apache.mesos.Protos.{ Status, TaskState }
+import mesosphere.marathon.upgrade.{DeploymentManager, DeploymentPlan}
+import org.apache.mesos.Protos.{Status, TaskState}
 import org.apache.mesos.SchedulerDriver
 import org.slf4j.LoggerFactory
 
-import scala.async.Async.{ async, await }
+import scala.async.Async.{async, await}
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 class LockingFailedException(msg: String) extends Exception(msg)
 
@@ -42,13 +42,11 @@ class MarathonSchedulerActor private (
   appRepository: ReadOnlyAppRepository,
   deploymentRepository: DeploymentRepository,
   healthCheckManager: HealthCheckManager,
-  taskTracker: TaskTracker,
   killService: TaskKillService,
   launchQueue: LaunchQueue,
   marathonSchedulerDriverHolder: MarathonSchedulerDriverHolder,
   electionService: ElectionService,
   eventBus: EventStream,
-  config: UpgradeConfig,
   cancellationTimeout: FiniteDuration = 1.minute)(implicit val mat: Materializer) extends Actor
     with ActorLogging with Stash {
   import context.dispatcher
@@ -101,8 +99,7 @@ class MarathonSchedulerActor private (
     case _ => stash()
   }
 
-  //TODO: fix style issue and enable this scalastyle check
-  //scalastyle:off cyclomatic.complexity method.length
+  @SuppressWarnings(Array("all")) // scapegoat has issues with async/await
   def started: Receive = LoggingReceive.withLabel("started")(sharedHandlers orElse {
     case LocalLeadershipEvent.Standby =>
       log.info("Suspending scheduler actor")
@@ -147,7 +144,7 @@ class MarathonSchedulerActor private (
     case cmd @ ScaleApp(appId) =>
       val origSender = sender()
       withLockFor(appId) {
-        val res = schedulerActions.scale(driver, appId)
+        val res = schedulerActions.scale(appId)
 
         if (origSender != context.system.deadLetters)
           res.sendAnswer(origSender, cmd)
@@ -169,7 +166,7 @@ class MarathonSchedulerActor private (
         val res = async {
           await(killService.killTasks(tasks, TaskKillReason.KillingTasksViaApi))
           val app = await(appRepository.get(appId))
-          app.foreach(schedulerActions.scale(driver, _))
+          app.foreach(schedulerActions.scale)
         }
 
         res onComplete { _ =>
@@ -210,6 +207,7 @@ class MarathonSchedulerActor private (
     * @param origSender The original sender of the Deploy message.
     * @return
     */
+  @SuppressWarnings(Array("all")) // scapegoat can't handle async/await
   def awaitCancellation(plan: DeploymentPlan, origSender: ActorRef, cancellationHandler: Cancellable): Receive =
     sharedHandlers.andThen[Unit] { _ =>
       if (tryDeploy(plan, origSender)) {
@@ -272,6 +270,7 @@ class MarathonSchedulerActor private (
     withLockFor(Set(appId))(f)
 
   // there has to be a better way...
+  @SuppressWarnings(Array("OptionGet"))
   def driver: SchedulerDriver = marathonSchedulerDriverHolder.driver.get
 
   def deploy(origSender: ActorRef, cmd: Deploy): Unit = {
@@ -325,15 +324,17 @@ class MarathonSchedulerActor private (
     log.error(reason, s"Deployment of ${plan.target.id} failed")
     plan.affectedApplicationIds.foreach(appId => launchQueue.purge(appId))
     eventBus.publish(DeploymentFailed(plan.id, plan))
-    if (reason.isInstanceOf[DeploymentCanceledException]) {
-      deploymentRepository.delete(plan.id).map(_ => ())
-    } else {
-      Future.successful(())
+    reason match {
+      case _:DeploymentCanceledException =>
+        deploymentRepository.delete(plan.id).map(_ => ())
+      case _ =>
+        Future.successful(())
     }
   }
 }
 
 object MarathonSchedulerActor {
+  @SuppressWarnings(Array("MaxParameters"))
   def props(
     createSchedulerActions: ActorRef => SchedulerActions,
     deploymentManagerProps: SchedulerActions => Props,
@@ -341,13 +342,11 @@ object MarathonSchedulerActor {
     appRepository: ReadOnlyAppRepository,
     deploymentRepository: DeploymentRepository,
     healthCheckManager: HealthCheckManager,
-    taskTracker: TaskTracker,
     killService: TaskKillService,
     launchQueue: LaunchQueue,
     marathonSchedulerDriverHolder: MarathonSchedulerDriverHolder,
     electionService: ElectionService,
     eventBus: EventStream,
-    config: UpgradeConfig,
     cancellationTimeout: FiniteDuration = 1.minute)(implicit mat: Materializer): Props = {
     Props(new MarathonSchedulerActor(
       createSchedulerActions,
@@ -356,13 +355,11 @@ object MarathonSchedulerActor {
       appRepository,
       deploymentRepository,
       healthCheckManager,
-      taskTracker,
       killService,
       launchQueue,
       marathonSchedulerDriverHolder,
       electionService,
       eventBus,
-      config,
       cancellationTimeout
     ))
   }
@@ -432,16 +429,15 @@ class SchedulerActions(
     launchQueue: LaunchQueue,
     eventBus: EventStream,
     val schedulerActor: ActorRef,
-    val killService: TaskKillService,
-    config: MarathonConf)(implicit ec: ExecutionContext, mat: Materializer) {
+    val killService: TaskKillService)(implicit ec: ExecutionContext, mat: Materializer) {
 
   private[this] val log = LoggerFactory.getLogger(getClass)
 
   // TODO move stuff below out of the scheduler
 
-  def startApp(driver: SchedulerDriver, app: AppDefinition): Unit = {
+  def startApp(app: AppDefinition): Unit = {
     log.info(s"Starting app ${app.id}")
-    scale(driver, app)
+    scale(app)
   }
 
   def stopApp(app: AppDefinition): Future[_] = {
@@ -454,8 +450,6 @@ class SchedulerActions(
           log.info("Killing {}", task.taskId)
           killService.killTask(task, TaskKillReason.DeletingApp)
         }
-      }
-      tasks.flatMap(_.launchedMesosId).foreach { taskId =>
       }
       launchQueue.purge(app.id)
       launchQueue.resetDelay(app)
@@ -511,6 +505,7 @@ class SchedulerActions(
     }
   }
 
+  @SuppressWarnings(Array("all")) // scapegoat can't handle async/await
   def reconcileHealthChecks(): Unit = {
     async {
       val group = await(groupRepository.root())
@@ -524,6 +519,7 @@ class SchedulerActions(
     * command, and constraints) are applied consistently across running
     * application instances.
     */
+  @SuppressWarnings(Array("UnusedMethodParameter", "EmptyMethod"))
   private def update(
     driver: SchedulerDriver,
     updatedApp: AppDefinition,
@@ -535,7 +531,7 @@ class SchedulerActions(
     * Make sure the app is running the correct number of instances
     */
   // FIXME: extract computation into a function that can be easily tested
-  def scale(driver: SchedulerDriver, app: AppDefinition): Unit = {
+  def scale(app: AppDefinition): Unit = {
     import SchedulerActions._
 
     def inQueueOrRunning(t: Task) = t.isCreated || t.isRunning || t.isStaging || t.isStarting || t.isKilling
@@ -575,9 +571,9 @@ class SchedulerActions(
     }
   }
 
-  def scale(driver: SchedulerDriver, appId: PathId): Future[Unit] = {
+  def scale(appId: PathId): Future[Unit] = {
     currentAppVersion(appId).map {
-      case Some(app) => scale(driver, app)
+      case Some(app) => scale(app)
       case _ => log.warn(s"App $appId does not exist. Not scaling.")
     }
   }

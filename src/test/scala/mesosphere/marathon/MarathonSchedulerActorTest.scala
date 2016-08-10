@@ -3,13 +3,13 @@ package mesosphere.marathon
 import java.util.concurrent.TimeoutException
 
 import akka.Done
-import akka.actor.{ ActorRef, Props }
+import akka.actor.{ActorRef, Props}
 import akka.event.EventStream
 import akka.stream.scaladsl.Source
 import akka.testkit._
 import akka.util.Timeout
 import mesosphere.marathon.MarathonSchedulerActor._
-import mesosphere.marathon.core.election.{ ElectionService, LocalLeadershipEvent }
+import mesosphere.marathon.core.election.{ElectionService, LocalLeadershipEvent}
 import mesosphere.marathon.core.event._
 import mesosphere.marathon.core.health.HealthCheckManager
 import mesosphere.marathon.core.history.impl.HistoryActor
@@ -17,20 +17,20 @@ import mesosphere.marathon.core.launcher.impl.LaunchQueueTestHelper
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.readiness.ReadinessCheckExecutor
 import mesosphere.marathon.core.task.tracker.TaskTracker
-import mesosphere.marathon.core.task.{ Task, TaskKillServiceMock }
+import mesosphere.marathon.core.task.{Task, TaskKillServiceMock}
 import mesosphere.marathon.io.storage.StorageProvider
 import mesosphere.marathon.state.PathId._
 import mesosphere.marathon.state._
-import mesosphere.marathon.storage.repository.{ AppRepository, DeploymentRepository, FrameworkIdRepository, GroupRepository, TaskFailureRepository }
-import mesosphere.marathon.test.{ MarathonActorSupport, Mockito }
+import mesosphere.marathon.storage.repository.{AppRepository, DeploymentRepository, FrameworkIdRepository, GroupRepository, TaskFailureRepository}
+import mesosphere.marathon.test.{MarathonActorSupport, Mockito}
 import mesosphere.marathon.upgrade._
 import org.apache.mesos.Protos.Status
 import org.apache.mesos.SchedulerDriver
-import org.scalatest.{ BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers }
+import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, GivenWhenThen, Matchers}
 
 import scala.collection.immutable.Set
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class MarathonSchedulerActorTest extends MarathonActorSupport
     with FunSuiteLike
@@ -345,13 +345,11 @@ class MarathonSchedulerActorTest extends MarathonActorSupport
         repo,
         deploymentRepo,
         hcManager,
-        taskTracker,
         killService,
         queue,
         holder,
         electionService,
-        system.eventStream,
-        conf
+        system.eventStream
       ))
 
     try {
@@ -419,13 +417,11 @@ class MarathonSchedulerActorTest extends MarathonActorSupport
         repo,
         deploymentRepo,
         hcManager,
-        taskTracker,
         killService,
         queue,
         holder,
         electionService,
         system.eventStream,
-        conf,
         cancellationTimeout = 0.seconds
       )
     )
@@ -518,7 +514,7 @@ class MarathonSchedulerActorTest extends MarathonActorSupport
     val electionService: ElectionService = mock[ElectionService]
     val schedulerActions: ActorRef => SchedulerActions = ref => {
       new SchedulerActions(
-        repo, groupRepo, hcManager, taskTracker, queue, new EventStream(system), ref, killService, mock[MarathonConf])(system.dispatcher, mat)
+        repo, groupRepo, hcManager, taskTracker, queue, new EventStream(system), ref, killService)(system.dispatcher, mat)
     }
     val conf: UpgradeConfig = mock[UpgradeConfig]
     val readinessCheckExecutor: ReadinessCheckExecutor = mock[ReadinessCheckExecutor]
@@ -547,13 +543,11 @@ class MarathonSchedulerActorTest extends MarathonActorSupport
           repo,
           deploymentRepo,
           hcManager,
-          taskTracker,
           killService,
           queue,
           holder,
           electionService,
-          system.eventStream,
-          conf
+          system.eventStream
         )
       )
     }

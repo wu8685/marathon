@@ -1,20 +1,17 @@
-import com.amazonaws.auth.{ EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider }
-import com.typesafe.sbt.SbtScalariform
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import com.amazonaws.auth.{EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider}
 import ohnosequences.sbt.SbtS3Resolver.autoImport._
-import org.scalastyle.sbt.ScalastylePlugin.{ buildSettings => styleSettings }
 import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyKeys._
 import sbtassembly.MergeStrategy
 import sbtbuildinfo.BuildInfoKeys._
-import sbtbuildinfo.{ BuildInfoKey, BuildInfoPlugin }
+import sbtbuildinfo.{BuildInfoKey, BuildInfoPlugin}
 import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease._
-import scala.util.Try
+import com.sksamuel.scapegoat.sbt.ScapegoatSbtPlugin.autoImport._
 
-import scalariform.formatter.preferences._
+import scala.util.Try
 
 object MarathonBuild extends Build {
   lazy val pluginInterface: Project = Project(
@@ -22,8 +19,6 @@ object MarathonBuild extends Build {
     base = file("plugin-interface"),
     settings = baseSettings ++
       asmSettings ++
-      formatSettings ++
-      scalaStyleSettings ++
       publishSettings ++
       Seq(
         libraryDependencies ++= Dependencies.pluginInterface
@@ -36,8 +31,6 @@ object MarathonBuild extends Build {
     settings = baseSettings ++
       asmSettings ++
       customReleaseSettings ++
-      formatSettings ++
-      scalaStyleSettings ++
       testSettings ++
       integrationTestSettings ++
       benchmarkSettings ++
@@ -67,8 +60,6 @@ object MarathonBuild extends Build {
     id = "mesos-simulation",
     base = file("mesos-simulation"),
     settings = baseSettings ++
-      formatSettings ++
-      scalaStyleSettings ++
       testSettings ++
       integrationTestSettings ++
       benchmarkSettings
@@ -111,15 +102,6 @@ object MarathonBuild extends Build {
     fork in Test := true
   )
 
-  lazy val testScalaStyle = taskKey[Unit]("testScalaStyle")
-
-  lazy val scalaStyleSettings = styleSettings ++ Seq(
-    testScalaStyle := {
-      org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value
-    },
-    (compile in Test) <<= (compile in Test) dependsOn testScalaStyle
-  )
-
   lazy val IntegrationTest = config("integration") extend Test
   lazy val Benchmark = config("bench") extend Test
 
@@ -148,8 +130,9 @@ object MarathonBuild extends Build {
     ),
     cancelable in Global := true,
     fork in Test := true,
-    fork in IntegrationTest := false,
-    javaOptions += "-Xmx4G"
+    javaOptions += "-Xmx4G",
+    scapegoatVersion := "1.2.1",
+    scapegoatRunAlways := true
   )
 
   lazy val asmSettings = Seq(
@@ -174,27 +157,6 @@ object MarathonBuild extends Build {
       cp filter { x => exclude(x.data.getName) }
     }
   )
-
-  lazy val formatSettings = SbtScalariform.scalariformSettings ++ Seq(
-    ScalariformKeys.preferences := FormattingPreferences()
-      .setPreference(AlignArguments, false)
-      .setPreference(AlignParameters, false)
-      .setPreference(AlignSingleLineCaseStatements, false)
-      .setPreference(CompactControlReadability, false)
-      .setPreference(DoubleIndentClassDeclaration, true)
-      .setPreference(DanglingCloseParenthesis, Preserve)
-      .setPreference(FormatXml, true)
-      .setPreference(IndentSpaces, 2)
-      .setPreference(IndentWithTabs, false)
-      .setPreference(MultilineScaladocCommentsStartOnFirstLine, false)
-      .setPreference(PlaceScaladocAsterisksBeneathSecondAsterisk, true)
-      .setPreference(PreserveSpaceBeforeArguments, true)
-      .setPreference(SpacesAroundMultiImports, true)
-      .setPreference(SpaceBeforeColon, false)
-      .setPreference(SpaceInsideBrackets, false)
-      .setPreference(SpaceInsideParentheses, false)
-      .setPreference(SpacesWithinPatternBinders, true)
-    )
 
   /**
    * This is the standard release process without

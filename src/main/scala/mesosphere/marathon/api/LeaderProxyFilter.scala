@@ -1,17 +1,18 @@
 package mesosphere.marathon.api
 
-import java.io.{ IOException, InputStream, OutputStream }
+import java.io.{IOException, InputStream, OutputStream}
 import java.net._
 import javax.inject.Named
 import javax.net.ssl._
 import javax.servlet._
-import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
+import akka.Done
 import com.google.inject.Inject
 import mesosphere.chaos.http.HttpConf
 import mesosphere.marathon.core.election.ElectionService
 import mesosphere.marathon.io.IO
-import mesosphere.marathon.{ LeaderProxyConf, ModuleNames }
+import mesosphere.marathon.{LeaderProxyConf, ModuleNames}
 import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 
@@ -32,6 +33,7 @@ class LeaderProxyFilter @Inject() (
 
   import LeaderProxyFilter._
 
+  @SuppressWarnings(Array("EmptyMethod"))
   def init(filterConfig: FilterConfig): Unit = {}
 
   private[this] val scheme = if (httpConf.disableHttp()) "https" else "http"
@@ -63,33 +65,32 @@ class LeaderProxyFilter @Inject() (
       //scalastyle:off magic.number
       var retries = 10
       //scalastyle:on
-
+      var consistent = false
       do {
         val weAreLeader = electionService.isLeader
         val currentLeaderData = electionService.leaderHostPort
 
         if (weAreLeader || currentLeaderData.exists(_ != myHostPort)) {
           log.info("Leadership info is consistent again!")
-          //scalastyle:off return
-          return true
-          //scalastyle:on
-        }
-
-        // as long as we are not flagged as elected yet, the leadership transition is still
-        // taking place and we hold back any requests.
-        if (retries >= 0) {
-          log.info(s"Waiting for consistent leadership state. Are we leader?: $weAreLeader, leader: $currentLeaderData")
-          sleep()
+          consistent = true
+          retries = 0
         } else {
-          log.error(
-            s"inconsistent leadership state, refusing request for ourselves at $myHostPort. " +
-              s"Are we leader?: $weAreLeader, leader: $currentLeaderData")
+
+          // as long as we are not flagged as elected yet, the leadership transition is still
+          // taking place and we hold back any requests.
+          if (retries >= 0) {
+            log.info(s"Waiting for consistent leadership state. Are we leader?: $weAreLeader, leader: $currentLeaderData")
+            sleep()
+          } else {
+            log.error(
+              s"inconsistent leadership state, refusing request for ourselves at $myHostPort. " +
+                s"Are we leader?: $weAreLeader, leader: $currentLeaderData")
+          }
         }
 
         retries -= 1
       } while (retries >= 0)
-
-      false
+      consistent
     }
 
     (rawRequest, rawResponse) match {
@@ -101,7 +102,7 @@ class LeaderProxyFilter @Inject() (
           chain.doFilter(request, response)
         } else if (leaderDataOpt.forall(_ == myHostPort)) { // either not leader or ourselves
           log.info(
-            s"Do not proxy to myself. Waiting for consistent leadership state. " +
+            "Do not proxy to myself. Waiting for consistent leadership state. " +
               s"Are we leader?: false, leader: $leaderDataOpt")
           if (waitForConsistentLeadership(response)) {
             doFilter(rawRequest, rawResponse, chain)
@@ -109,12 +110,17 @@ class LeaderProxyFilter @Inject() (
             response.sendError(HttpStatus.SC_SERVICE_UNAVAILABLE, ERROR_STATUS_NO_CURRENT_LEADER)
           }
         } else {
-          try {
-            val url: URL = buildUrl(leaderDataOpt.get, request)
-            forwarder.forward(url, request, response)
-          } catch {
-            case NonFatal(e) =>
-              throw new RuntimeException("while proxying", e)
+          leaderDataOpt.map { leaderData =>
+            val url = buildUrl(leaderData, request)
+            try {
+              forwarder.forward(url, request, response)
+              Done
+            } catch {
+              case NonFatal(e) =>
+                throw new RuntimeException("while proxying", e)
+            }
+          }.getOrElse {
+            throw new RuntimeException("While proxying, no leader was found")
           }
         }
       case _ =>
@@ -128,6 +134,7 @@ class LeaderProxyFilter @Inject() (
     //scalastyle:on
   }
 
+  @SuppressWarnings(Array("EmptyMethod"))
   def destroy() {
     //NO-OP
   }
@@ -245,17 +252,15 @@ class JavaUrlConnectionRequestForwarder @Inject() (
       val status = leaderConnection.getResponseCode
       response.setStatus(status)
 
-      val fields = leaderConnection.getHeaderFields
-      // getHeaderNames() and getHeaders() are known to return null
-      if (fields != null) {
-        for ((name, values) <- fields.asScala) {
-          if (name != null && values != null) {
-            for (value <- values.asScala) {
-              response.addHeader(name, value)
+      Option(leaderConnection.getHeaderFields).foreach { _.asScala.foreach { case (name, values) =>
+        (Option(name), Option(values)) match {
+          case (Some(headerName), Some(headerValues)) =>
+            headerValues.asScala.foreach { value =>
+             response.addHeader(headerName, value)
             }
-          }
+          case _ =>
         }
-      }
+      }}
       response.addHeader(HEADER_VIA, viaValue)
 
       IO.using(response.getOutputStream) { output =>

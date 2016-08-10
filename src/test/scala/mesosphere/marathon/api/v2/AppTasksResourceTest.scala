@@ -351,7 +351,6 @@ class AppTasksResourceTest extends MarathonSpec with Matchers with GivenWhenThen
     groupManager = mock[GroupManager]
     identity = auth.identity
     appsTaskResource = new AppTasksResource(
-      service,
       taskTracker,
       taskKiller,
       healthCheckManager,
@@ -367,7 +366,6 @@ class AppTasksResourceTest extends MarathonSpec with Matchers with GivenWhenThen
   private[this] def useRealTaskKiller(): Unit = {
     taskKiller = new TaskKiller(taskTracker, stateOpProcessor, groupManager, service, config, auth.auth, auth.auth)
     appsTaskResource = new AppTasksResource(
-      service,
       taskTracker,
       taskKiller,
       healthCheckManager,

@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory
 import play.api.libs.json._
 
 import scala.collection.GenTraversableOnce
-import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -217,7 +216,7 @@ object Validation {
     else Failure(Set(RuleViolation(seq, errorMessage, None)))
   }
 
-  def theOnlyDefinedOptionIn[A <: Product: ClassTag, B](product: A): Validator[Option[B]] =
+  def theOnlyDefinedOptionIn[A <: Product, B](product: A): Validator[Option[B]] =
     new Validator[Option[B]] {
       def apply(option: Option[B]) = {
         option match {
@@ -230,7 +229,7 @@ object Validation {
             if (n == 1)
               Success
             else
-              Failure(Set(RuleViolation(product, s"not allowed in conjunction with other properties.", None)))
+              Failure(Set(RuleViolation(product, "not allowed in conjunction with other properties.", None)))
           case None => Success
         }
       }
@@ -252,6 +251,7 @@ object Validation {
     )
   }
 
+  @SuppressWarnings(Array("UnsafeContains"))
   def oneOf[T <: AnyRef](options: T*): Validator[T] = {
     import ViolationBuilder._
     new NullSafeValidator[T](

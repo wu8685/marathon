@@ -65,10 +65,11 @@ class CoreGuiceModule extends AbstractModule {
   @Provides @Singleton
   def stateOpProcessor(coreModule: CoreModule): TaskStateOpProcessor = coreModule.taskTrackerModule.stateOpProcessor
 
+  // make sure to initialize prerequisites before creating coordinator
+  @SuppressWarnings(Array("UnusedMethodParameter"))
   @Provides @Singleton
   def leadershipCoordinator(
     leadershipModule: LeadershipModule,
-    // makeSureToInitializeThisBeforeCreatingCoordinator
     prerequisite1: TaskStatusUpdateProcessor,
     prerequisite2: LaunchQueue): LeadershipCoordinator =
     leadershipModule.coordinator()

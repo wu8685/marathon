@@ -41,7 +41,6 @@ class ElectionModule(
           config,
           system,
           eventStream,
-          http,
           metrics,
           hostPort,
           backoff,

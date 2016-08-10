@@ -228,7 +228,6 @@ class TasksResourceTest extends MarathonSpec with GivenWhenThen with Matchers wi
 
     taskKiller = new TaskKiller(taskTracker, stateOpProcessor, groupManager, service, config, auth.auth, auth.auth)
     taskResource = new TasksResource(
-      service,
       taskTracker,
       taskKiller,
       config,
@@ -289,7 +288,6 @@ class TasksResourceTest extends MarathonSpec with GivenWhenThen with Matchers wi
     healthCheckManager = mock[HealthCheckManager]
     identity = mock[Identity]
     taskResource = new TasksResource(
-      service,
       taskTracker,
       taskKiller,
       config,

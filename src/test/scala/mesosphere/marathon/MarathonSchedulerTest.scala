@@ -1,20 +1,18 @@
 package mesosphere.marathon
 
 import akka.Done
-import akka.actor.ActorSystem
 import akka.event.EventStream
 import akka.testkit.TestProbe
-import mesosphere.marathon.core.base.Clock
 import mesosphere.marathon.core.event._
 import mesosphere.marathon.core.launcher.OfferProcessor
 import mesosphere.marathon.core.launchqueue.LaunchQueue
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
-import mesosphere.marathon.storage.repository.{ AppRepository, FrameworkIdRepository }
-import mesosphere.marathon.test.{ MarathonActorSupport, Mockito }
-import mesosphere.util.state.{ FrameworkId, MesosLeaderInfo, MutableMesosLeaderInfo }
+import mesosphere.marathon.storage.repository.{AppRepository, FrameworkIdRepository}
+import mesosphere.marathon.test.{MarathonActorSupport, Mockito}
+import mesosphere.util.state.{FrameworkId, MesosLeaderInfo, MutableMesosLeaderInfo}
 import org.apache.mesos.Protos._
 import org.apache.mesos.SchedulerDriver
-import org.scalatest.{ BeforeAndAfterAll, GivenWhenThen, Matchers }
+import org.scalatest.{BeforeAndAfterAll, GivenWhenThen, Matchers}
 
 import scala.concurrent.Future
 
@@ -46,12 +44,10 @@ class MarathonSchedulerTest
     taskStatusProcessor = mock[TaskStatusUpdateProcessor]
     scheduler = new MarathonScheduler(
       eventBus,
-      Clock(),
       offerProcessor = offerProcessor,
       taskStatusProcessor = taskStatusProcessor,
       frameworkIdRepository,
       mesosLeaderInfo,
-      mock[ActorSystem],
       config) {
       override protected def suicide(removeFrameworkId: Boolean): Unit = {
         suicideFn(removeFrameworkId)

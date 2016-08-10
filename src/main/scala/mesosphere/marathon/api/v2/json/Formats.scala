@@ -70,7 +70,7 @@ trait Formats
       "taskId" -> failure.taskId.getValue,
       "timestamp" -> failure.timestamp,
       "version" -> failure.version,
-      "slaveId" -> (if (failure.slaveId.isDefined) failure.slaveId.get.getValue else JsNull)
+      "slaveId" -> failure.slaveId.fold[JsValue](JsNull)(id => JsString(id.getValue))
     )
   }
 
@@ -196,7 +196,7 @@ trait Formats
   }
 
   def nonEmpty[C <: Iterable[_]](implicit reads: Reads[C]): Reads[C] =
-    Reads.filterNot[C](ValidationError(s"set must not be empty"))(_.isEmpty)(reads)
+    Reads.filterNot[C](ValidationError("set must not be empty"))(_.isEmpty)(reads)
 
   def enumFormat[A <: java.lang.Enum[A]](read: String => A, errorMsg: String => String): Format[A] = {
     val reads = Reads[A] {
@@ -303,19 +303,19 @@ trait ContainerFormats {
           if (`type` == ContainerInfo.Type.DOCKER) {
             Container.Docker.withDefaultPortMappings(
               volumes,
-              docker.get.image,
-              docker.get.network,
-              docker.get.portMappings,
-              docker.get.privileged,
-              docker.get.parameters,
-              docker.get.forcePullImage
+              d.image,
+              d.network,
+              d.portMappings,
+              d.privileged,
+              d.parameters,
+              d.forcePullImage
             )
           } else {
             Container.MesosDocker(
               volumes,
-              docker.get.image,
-              docker.get.credential,
-              docker.get.forcePullImage
+              d.image,
+              d.credential,
+              d.forcePullImage
             )
           }
         case _ =>
@@ -396,13 +396,11 @@ trait ContainerFormats {
         "appc" -> appcValues(appc)
       )
     }
-    Writes { container =>
-      container match {
-        case m: Container.Mesos => MesosContainerWrites.writes(m)
-        case d: Container.Docker => DockerContainerWrites.writes(d)
-        case c: Container.MesosDocker => MesosDockerContainerWrites.writes(c)
-        case c: Container.MesosAppC => AppCContainerWrites.writes(c)
-      }
+    Writes {
+      case m: Container.Mesos => MesosContainerWrites.writes(m)
+      case d: Container.Docker => DockerContainerWrites.writes(d)
+      case c: Container.MesosDocker => MesosDockerContainerWrites.writes(c)
+      case c: Container.MesosAppC => AppCContainerWrites.writes(c)
     }
   }
 }
@@ -622,7 +620,7 @@ trait HealthCheckFormats {
       "firstSuccess" -> health.firstSuccess,
       "lastFailure" -> health.lastFailure,
       "lastSuccess" -> health.lastSuccess,
-      "lastFailureCause" -> (if (health.lastFailureCause.isDefined) health.lastFailureCause.get else JsNull),
+      "lastFailureCause" -> health.lastFailureCause.fold[JsValue](JsNull)(JsString.apply),
       "taskId" -> health.taskId
     )
   }
@@ -1066,16 +1064,16 @@ trait AppAndGroupFormats {
 
   implicit lazy val TaskStatsByVersionWrites: Writes[TaskStatsByVersion] =
     Writes { byVersion =>
-      val maybeJsons = Seq[(String, Option[TaskStats])](
+      val maybeJsons = Map[String, Option[TaskStats]](
         "startedAfterLastScaling" -> byVersion.maybeStartedAfterLastScaling,
         "withLatestConfig" -> byVersion.maybeWithLatestConfig,
         "withOutdatedConfig" -> byVersion.maybeWithOutdatedConfig,
         "totalSummary" -> byVersion.maybeTotalSummary
       )
       Json.toJson(
-        maybeJsons.iterator.flatMap {
-        case (k, v) => v.map(k -> TaskStatsWrites.writes(_))
-      }.toMap
+        maybeJsons.flatMap {
+          case (k, v) => v.map(k -> TaskStatsWrites.writes(_))
+        }
       )
     }
 

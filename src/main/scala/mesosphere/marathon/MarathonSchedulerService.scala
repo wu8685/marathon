@@ -1,27 +1,24 @@
 package mesosphere.marathon
 
 import java.util.concurrent.CountDownLatch
-import java.util.{ Timer, TimerTask }
-import javax.inject.{ Inject, Named }
+import java.util.{Timer, TimerTask}
+import javax.inject.{Inject, Named}
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.codahale.metrics.MetricRegistry
 import com.google.common.util.concurrent.AbstractExecutionThreadService
 import mesosphere.marathon.MarathonSchedulerActor._
-import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
-import mesosphere.marathon.core.health.HealthCheckManager
+import mesosphere.marathon.core.election.{ElectionCandidate, ElectionService}
 import mesosphere.marathon.core.heartbeat._
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.core.task.Task
-import mesosphere.marathon.metrics.Metrics
-import mesosphere.marathon.state.{ AppDefinition, PathId, Timestamp }
+import mesosphere.marathon.state.{AppDefinition, PathId, Timestamp}
 import mesosphere.marathon.storage.migration.Migration
-import mesosphere.marathon.storage.repository.{ FrameworkIdRepository, ReadOnlyAppRepository }
+import mesosphere.marathon.storage.repository.{FrameworkIdRepository, ReadOnlyAppRepository}
 import mesosphere.marathon.stream.Sink
-import mesosphere.marathon.upgrade.DeploymentManager.{ CancelDeployment, DeploymentStepInfo }
+import mesosphere.marathon.upgrade.DeploymentManager.{CancelDeployment, DeploymentStepInfo}
 import mesosphere.marathon.upgrade.DeploymentPlan
 import mesosphere.util.PromiseActor
 import org.apache.mesos.Protos.FrameworkID
@@ -30,7 +27,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.Seq
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future, TimeoutException }
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.Failure
 
 /**
@@ -68,7 +65,6 @@ trait DeploymentService {
   */
 class MarathonSchedulerService @Inject() (
   leadershipCoordinator: LeadershipCoordinator,
-  healthCheckManager: HealthCheckManager,
   config: MarathonConf,
   frameworkIdRepository: FrameworkIdRepository,
   electionService: ElectionService,
@@ -78,8 +74,7 @@ class MarathonSchedulerService @Inject() (
   system: ActorSystem,
   migration: Migration,
   @Named("schedulerActor") schedulerActor: ActorRef,
-  @Named(ModuleNames.MESOS_HEARTBEAT_ACTOR) mesosHeartbeatActor: ActorRef,
-  metrics: Metrics = new Metrics(new MetricRegistry))(implicit mat: Materializer)
+  @Named(ModuleNames.MESOS_HEARTBEAT_ACTOR) mesosHeartbeatActor: ActorRef)(implicit mat: Materializer)
     extends AbstractExecutionThreadService with ElectionCandidate with DeploymentService {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -139,7 +134,7 @@ class MarathonSchedulerService @Inject() (
     (schedulerActor ? RetrieveRunningDeployments)
       .recoverWith {
         case _: TimeoutException =>
-          Future.failed(new TimeoutException(s"Can not retrieve the list of running deployments in time"))
+          Future.failed(new TimeoutException("Can not retrieve the list of running deployments in time"))
       }
       .mapTo[RunningDeployments]
       .map(_.plans)
@@ -223,7 +218,7 @@ class MarathonSchedulerService @Inject() (
       Future.sequence(prePostDriverCallbacks.map(_.preDriverStarts)),
       config.onElectedPrepareTimeout().millis
     )
-    log.info(s"Finished preDriverStarts callbacks")
+    log.info("Finished preDriverStarts callbacks")
 
     // start all leadership coordination actors
     Await.result(leadershipCoordinator.prepareForStart(), config.maxActorStartupTime().milliseconds)
@@ -262,7 +257,7 @@ class MarathonSchedulerService @Inject() (
 
         log.info(s"Call postDriverRuns callbacks on ${prePostDriverCallbacks.mkString(", ")}")
         Await.result(Future.sequence(prePostDriverCallbacks.map(_.postDriverTerminates)), config.zkTimeoutDuration)
-        log.info(s"Finished postDriverRuns callbacks")
+        log.info("Finished postDriverRuns callbacks")
       }
     }
   }
