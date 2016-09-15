@@ -12,7 +12,7 @@ import org.jgrapht.DirectedGraph
 import org.jgrapht.alg.CycleDetector
 import org.jgrapht.graph._
 
-import scala.collection.JavaConverters._
+import mesosphere.marathon.stream._
 
 case class Group(
     id: PathId,
@@ -25,7 +25,6 @@ case class Group(
   override def mergeFromProto(bytes: Array[Byte]): Group = Group.fromProto(GroupDefinition.parseFrom(bytes))
 
   override def toProto: GroupDefinition = {
-    import collection.JavaConverters._
     GroupDefinition.newBuilder
       .setId(id.toString)
       .setVersion(version.toString)
@@ -162,7 +161,7 @@ case class Group(
 
   def appsWithNoDependencies: Set[AppDefinition] = {
     val g = dependencyGraph
-    g.vertexSet.asScala.filter { v => g.outDegreeOf(v) == 0 }.toSet
+    g.vertexSet.filter { v => g.outDegreeOf(v) == 0 }.toSet
   }
 
   def hasNonCyclicDependencies: Boolean = {
@@ -203,12 +202,12 @@ object Group {
   def fromProto(msg: GroupDefinition): Group = {
     Group(
       id = msg.getId.toPath,
-      apps = msg.getDeprecatedAppsList.asScala.map { proto =>
+      apps = msg.getDeprecatedAppsList.map { proto =>
         val app = AppDefinition.fromProto(proto)
         app.id -> app
       }(collection.breakOut),
-      groups = msg.getGroupsList.asScala.map(fromProto)(collection.breakOut),
-      dependencies = msg.getDependenciesList.asScala.map(PathId(_))(collection.breakOut),
+      groups = msg.getGroupsList.map(fromProto)(collection.breakOut),
+      dependencies = msg.getDependenciesList.map(PathId(_))(collection.breakOut),
       version = Timestamp(msg.getVersion)
     )
   }

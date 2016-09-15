@@ -7,6 +7,7 @@ import mesosphere.marathon.core.task.Task.LocalVolume
 import mesosphere.util.state.FrameworkId
 import org.apache.mesos.Protos.Resource.ReservationInfo
 import org.apache.mesos.{ Protos => Mesos }
+import mesosphere.marathon.stream._
 
 class OfferOperationFactory(
     private val principalOpt: Option[String],
@@ -37,7 +38,6 @@ class OfferOperationFactory(
   }
 
   def reserve(frameworkId: FrameworkId, taskId: Task.Id, resources: Iterable[Mesos.Resource]): Mesos.Offer.Operation = {
-    import scala.collection.JavaConverters._
     val reservedResources = resources.map { resource =>
 
       val reservation = ReservationInfo.newBuilder()
@@ -64,7 +64,6 @@ class OfferOperationFactory(
     frameworkId: FrameworkId,
     taskId: Task.Id,
     localVolumes: Iterable[LocalVolume]): Mesos.Offer.Operation = {
-    import scala.collection.JavaConverters._
 
     val volumes: Iterable[Mesos.Resource] = localVolumes.map { vol =>
       val disk = {
