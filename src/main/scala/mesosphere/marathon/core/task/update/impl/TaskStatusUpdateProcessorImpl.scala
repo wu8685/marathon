@@ -7,7 +7,7 @@ import mesosphere.marathon.MarathonSchedulerDriverHolder
 import mesosphere.marathon.core.base.Clock
 import mesosphere.marathon.core.instance.Instance
 import mesosphere.marathon.core.instance.update.InstanceUpdateOperation
-import mesosphere.marathon.core.task.termination.{ TaskKillReason, TaskKillService }
+import mesosphere.marathon.core.task.termination.{ KillReason, KillService }
 import mesosphere.marathon.core.task.tracker.{ InstanceTracker, TaskStateOpProcessor }
 import mesosphere.marathon.core.task.update.TaskStatusUpdateProcessor
 import mesosphere.marathon.core.task.Task
@@ -27,7 +27,7 @@ class TaskStatusUpdateProcessorImpl @Inject() (
     instanceTracker: InstanceTracker,
     stateOpProcessor: TaskStateOpProcessor,
     driverHolder: MarathonSchedulerDriverHolder,
-    killService: TaskKillService) extends TaskStatusUpdateProcessor {
+    killService: KillService) extends TaskStatusUpdateProcessor {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private[this] val log = LoggerFactory.getLogger(getClass)
@@ -54,7 +54,7 @@ class TaskStatusUpdateProcessorImpl @Inject() (
       case None if killWhenUnknown(status) =>
         killUnknownTaskTimer {
           log.warn("Kill unknown {}", taskId)
-          killService.killUnknownTask(taskId, TaskKillReason.Unknown)
+          killService.killUnknownTask(taskId, KillReason.Unknown)
           acknowledge(status)
         }
 

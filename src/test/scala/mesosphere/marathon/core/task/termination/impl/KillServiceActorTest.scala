@@ -3,13 +3,13 @@ package mesosphere.marathon.core.task.termination.impl
 import akka.Done
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
-import mesosphere.marathon.{ InstanceConversions, MarathonSchedulerDriverHolder }
+import mesosphere.marathon.{ InstanceConversions, MarathonSchedulerDriverHolder, MarathonTestHelper }
 import mesosphere.marathon.core.base.ConstantClock
 import mesosphere.marathon.core.event.MesosStatusUpdateEvent
 import mesosphere.marathon.core.instance.update.InstanceUpdateOperation
-import mesosphere.marathon.core.task.termination.TaskKillConfig
+import mesosphere.marathon.core.task.termination.KillConfig
 import mesosphere.marathon.core.task.tracker.{ InstanceTracker, TaskStateOpProcessor }
-import mesosphere.marathon.core.task.{ MarathonTaskStatus, Task }
+import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.state.{ PathId, Timestamp }
 import mesosphere.marathon.test.Mockito
 import org.apache.mesos
@@ -24,7 +24,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Promise
 import scala.concurrent.duration._
 
-class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
+class KillServiceActorTest extends TestKit(ActorSystem("test"))
     with FunSuiteLike
     with BeforeAndAfterAll
     with BeforeAndAfterEach
@@ -35,7 +35,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
     with Mockito
     with InstanceConversions {
 
-  import TaskKillServiceActorTest.log
+  import KillServiceActorTest.log
 
   ignore("Kill single known task - https://github.com/mesosphere/marathon/issues/4202") {
     val f = new Fixture
@@ -46,7 +46,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill that task")
     val promise = Promise[Done]()
-    actor ! TaskKillServiceActor.KillTasks(Seq(task), promise)
+    actor ! KillServiceActor.KillInstances(Seq(task), promise)
 
     Then("a kill is issued to the driver")
     verify(f.driver, timeout(500)).killTask(task.taskId.mesosTaskId)
@@ -68,15 +68,16 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill that taskId")
     val promise = Promise[Done]()
-    actor ! TaskKillServiceActor.KillUnknownTaskById(taskId, promise)
+    actor ! KillServiceActor.KillUnknownTaskById(taskId, promise)
 
-    Then("it will not fetch the task from the taskTracker")
+    Then("it will not fetch the task from the instanceTracker")
     noMoreInteractions(f.taskTracker)
 
     And("a kill is issued to the driver")
     verify(f.driver, timeout(500)).killTask(taskId.mesosTaskId)
     noMoreInteractions(f.driver)
 
+    // TODO(PODS): this update will never be published because the task is not known
     When("a terminal status update is published via the event stream")
     f.publishStatusUpdate(taskId, mesos.Protos.TaskState.TASK_KILLED)
 
@@ -93,7 +94,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill that task")
     val promise = Promise[Done]()
-    actor ! TaskKillServiceActor.KillTasks(Seq(task), promise)
+    actor ! KillServiceActor.KillInstances(Seq(task), promise)
 
     Then("NO kill is issued to the driver because the task is lost")
     noMoreInteractions(f.driver)
@@ -119,7 +120,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill those tasks")
     val promise = Promise[Done]()
-    actor ! TaskKillServiceActor.KillTasks(Seq(runningTask, lostTask, stagingTask), promise)
+    actor ! KillServiceActor.KillInstances(Seq(runningTask, lostTask, stagingTask), promise)
 
     Then("the task tracker is not queried")
     noMoreInteractions(f.taskTracker)
@@ -148,7 +149,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill those tasks")
     val promise = Promise[Done]()
-    actor ! TaskKillServiceActor.KillTasks(emptyList, promise)
+    actor ! KillServiceActor.KillInstances(emptyList, promise)
 
     Then("the promise is eventually completed successfully")
     promise.future.futureValue should be (Done)
@@ -174,9 +175,9 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
     val promise3 = Promise[Done]()
 
     When("the service is asked subsequently to kill those tasks")
-    actor ! TaskKillServiceActor.KillTasks(Seq(task1), promise1)
-    actor ! TaskKillServiceActor.KillTasks(Seq(task2), promise2)
-    actor ! TaskKillServiceActor.KillTasks(Seq(task3), promise3)
+    actor ! KillServiceActor.KillInstances(Seq(task1), promise1)
+    actor ! KillServiceActor.KillInstances(Seq(task2), promise2)
+    actor ! KillServiceActor.KillInstances(Seq(task3), promise3)
 
     Then("exactly 3 kills are issued to the driver")
     verify(f.driver, timeout(500)).killTask(task1.taskId.mesosTaskId)
@@ -207,7 +208,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill those tasks")
     tasks.values.foreach { task =>
-      actor ! TaskKillServiceActor.KillTasks(Seq(task), Promise[Done]())
+      actor ! KillServiceActor.KillInstances(Seq(task), Promise[Done]())
     }
 
     Then("5 kills are issued immediately to the driver")
@@ -239,7 +240,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
 
     When("the service is asked to kill those tasks")
     val promise = Promise[Done]()
-    actor ! TaskKillServiceActor.KillTasks(tasks.values, promise)
+    actor ! KillServiceActor.KillInstances(tasks.values, promise)
 
     Then("5 kills are issued immediately to the driver")
     val captor: ArgumentCaptor[mesos.Protos.TaskID] = ArgumentCaptor.forClass(classOf[mesos.Protos.TaskID])
@@ -267,7 +268,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
     val promise = Promise[Done]()
 
     When("the service is asked to kill that task")
-    actor ! TaskKillServiceActor.KillTasks(Seq(task), promise)
+    actor ! KillServiceActor.KillInstances(Seq(task), promise)
 
     Then("a kill is issued to the driver")
     verify(f.driver, timeout(500)).killTask(task.taskId.mesosTaskId)
@@ -296,7 +297,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
   }
 
   override protected def afterEach(): Unit = {
-    import TaskKillServiceActorTest._
+    import KillServiceActorTest._
     actor match {
       case Some(actorRef) => system.stop(actorRef)
       case _ =>
@@ -319,12 +320,12 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
       holder.driver = Some(driver)
       holder
     }
-    val defaultConfig: TaskKillConfig = new TaskKillConfig {
+    val defaultConfig: KillConfig = new KillConfig {
       override lazy val killChunkSize: Int = 5
       override lazy val killRetryTimeout: FiniteDuration = 10.minutes
       override lazy val killRetryMax: Int = 5
     }
-    val retryConfig: TaskKillConfig = new TaskKillConfig {
+    val retryConfig: KillConfig = new KillConfig {
       override lazy val killChunkSize: Int = 5
       override lazy val killRetryTimeout: FiniteDuration = 500.millis
       override lazy val killRetryMax: Int = 1
@@ -333,26 +334,18 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
     val parent = TestProbe()
     val clock = ConstantClock()
 
-    def createTaskKillActor(config: TaskKillConfig = defaultConfig): ActorRef = {
-      import TaskKillServiceActorTest._
-      val actorRef: ActorRef = TestActorRef(TaskKillServiceActor.props(driverHolder, stateOpProcessor, config, clock), parent.ref, "TaskKillService")
+    def createTaskKillActor(config: KillConfig = defaultConfig): ActorRef = {
+      import KillServiceActorTest._
+      val actorRef: ActorRef = TestActorRef(KillServiceActor.props(driverHolder, stateOpProcessor, config, clock), parent.ref, "KillService")
       actor = Some(actorRef)
       actorRef
     }
 
     def mockTask(taskId: Task.Id, stagedAt: Timestamp, mesosState: mesos.Protos.TaskState): Task.LaunchedEphemeral = {
-      val status: Task.Status = mock[Task.Status]
-      status.stagedAt returns stagedAt
-      val mesosStatus: mesos.Protos.TaskStatus = mesos.Protos.TaskStatus.newBuilder()
-        .setState(mesosState)
-        .buildPartial()
-      val task = mock[Task.LaunchedEphemeral]
-      task.taskId returns taskId
-      task.status returns status
-      task.mesosStatus returns Some(mesosStatus)
-      status.taskStatus returns MarathonTaskStatus(mesosStatus)
-      task
+      val mesosStatus = MarathonTestHelper.statusForState(taskId.idString, mesosState)
+      MarathonTestHelper.minimalTask(taskId, stagedAt, Some(mesosStatus))
     }
+
     def now(): Timestamp = Timestamp(0)
     def publishStatusUpdate(taskId: Task.Id, state: mesos.Protos.TaskState): Unit = {
       val appId = taskId.runSpecId
@@ -367,7 +360,7 @@ class TaskKillServiceActorTest extends TestKit(ActorSystem("test"))
   }
 }
 
-object TaskKillServiceActorTest {
+object KillServiceActorTest {
   val log = LoggerFactory.getLogger(getClass)
   var actor: Option[ActorRef] = None
 }
