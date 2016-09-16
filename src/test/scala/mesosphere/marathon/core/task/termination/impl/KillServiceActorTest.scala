@@ -5,11 +5,12 @@ import akka.actor.{ ActorRef, ActorSystem }
 import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
 import mesosphere.marathon.{ InstanceConversions, MarathonSchedulerDriverHolder, MarathonTestHelper }
 import mesosphere.marathon.core.base.ConstantClock
-import mesosphere.marathon.core.event.MesosStatusUpdateEvent
-import mesosphere.marathon.core.instance.update.InstanceUpdateOperation
+import mesosphere.marathon.core.event.InstanceChanged
+import mesosphere.marathon.core.instance.update.{ InstanceChange, InstanceUpdateOperation }
 import mesosphere.marathon.core.task.termination.KillConfig
 import mesosphere.marathon.core.task.tracker.{ InstanceTracker, TaskStateOpProcessor }
 import mesosphere.marathon.core.task.Task
+import mesosphere.marathon.core.task.bus.TaskStatusUpdateTestHelper
 import mesosphere.marathon.state.{ PathId, Timestamp }
 import mesosphere.marathon.test.Mockito
 import org.apache.mesos
@@ -37,7 +38,7 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
 
   import KillServiceActorTest.log
 
-  ignore("Kill single known task - https://github.com/mesosphere/marathon/issues/4202") {
+  test("Kill single known task") {
     val f = new Fixture
     val actor = f.createTaskKillActor()
 
@@ -52,7 +53,7 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     verify(f.driver, timeout(500)).killTask(task.taskId.mesosTaskId)
 
     When("a terminal status update is published via the event stream")
-    f.publishStatusUpdate(task.taskId, mesos.Protos.TaskState.TASK_KILLED)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task).wrapped)
 
     Then("the promise is eventually completed successfully")
     promise.future.futureValue should be (Done)
@@ -78,11 +79,11 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(f.driver)
 
     // TODO(PODS): this update will never be published because the task is not known
-    When("a terminal status update is published via the event stream")
-    f.publishStatusUpdate(taskId, mesos.Protos.TaskState.TASK_KILLED)
+    When("Nothing happens")
 
-    Then("the promise is eventually completed successfully")
-    promise.future.futureValue should be (Done)
+    //    Then("the promise is eventually completed successfully")
+    Then("the test fails")
+    false shouldBe true
   }
 
   test("Kill single known LOST task") {
@@ -103,13 +104,13 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     verify(f.stateOpProcessor, timeout(500)).process(InstanceUpdateOperation.ForceExpunge(task.taskId))
 
     When("a terminal status update is published via the event stream")
-    f.publishStatusUpdate(task.taskId, mesos.Protos.TaskState.TASK_KILLED)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task).wrapped)
 
     Then("the promise is eventually completed successfully")
     promise.future.futureValue should be (Done)
   }
 
-  ignore("kill multiple tasks at once - https://github.com/mesosphere/marathon/issues/4202") {
+  test("kill multiple tasks at once") {
     val f = new Fixture
     val actor = f.createTaskKillActor()
 
@@ -132,9 +133,9 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(f.driver)
 
     And("Eventually terminal status updates are published via the event stream")
-    f.publishStatusUpdate(runningTask.taskId, mesos.Protos.TaskState.TASK_KILLED)
-    f.publishStatusUpdate(lostTask.taskId, mesos.Protos.TaskState.TASK_LOST)
-    f.publishStatusUpdate(stagingTask.taskId, mesos.Protos.TaskState.TASK_LOST)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(runningTask).wrapped)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.unreachable(lostTask).wrapped)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.unreachable(stagingTask).wrapped)
 
     Then("the promise is eventually completed successfully")
     promise.future.futureValue should be (Done)
@@ -161,7 +162,7 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(f.driver)
   }
 
-  ignore("kill multiple tasks subsequently - https://github.com/mesosphere/marathon/issues/4202") {
+  test("kill multiple tasks subsequently") {
     val f = new Fixture
     val actor = f.createTaskKillActor()
 
@@ -186,9 +187,9 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     noMoreInteractions(f.driver)
 
     And("Eventually terminal status updates are published via the event stream")
-    f.publishStatusUpdate(task1.taskId, mesos.Protos.TaskState.TASK_KILLED)
-    f.publishStatusUpdate(task2.taskId, mesos.Protos.TaskState.TASK_KILLED)
-    f.publishStatusUpdate(task3.taskId, mesos.Protos.TaskState.TASK_KILLED)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task1).wrapped)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task2).wrapped)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task3).wrapped)
 
     Then("the promises are eventually are completed successfully")
     promise1.future.futureValue should be (Done)
@@ -220,7 +221,7 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     captor.getAllValues.asScala.foreach { id =>
       val taskId = Task.Id(id)
       tasks.get(taskId).foreach { task =>
-        f.publishStatusUpdate(task.taskId, mesos.Protos.TaskState.TASK_KILLED)
+        f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task).wrapped)
       }
     }
 
@@ -251,7 +252,7 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     captor.getAllValues.asScala.foreach { id =>
       val taskId = Task.Id(id)
       tasks.get(taskId).foreach { task =>
-        f.publishStatusUpdate(task.taskId, mesos.Protos.TaskState.TASK_KILLED)
+        f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task).wrapped)
       }
     }
 
@@ -286,7 +287,7 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     verify(f.stateOpProcessor, timeout(1000)).process(InstanceUpdateOperation.ForceExpunge(task.taskId))
 
     When("a terminal status update is published via the event stream")
-    f.publishStatusUpdate(task.taskId, mesos.Protos.TaskState.TASK_KILLED)
+    f.publishInstanceChanged(TaskStatusUpdateTestHelper.killed(task).wrapped)
 
     Then("the promise is eventually completed successfully")
     promise.future.futureValue should be (Done)
@@ -347,15 +348,11 @@ class KillServiceActorTest extends TestKit(ActorSystem("test"))
     }
 
     def now(): Timestamp = Timestamp(0)
-    def publishStatusUpdate(taskId: Task.Id, state: mesos.Protos.TaskState): Unit = {
-      val appId = taskId.runSpecId
-      val statusUpdateEvent =
-        MesosStatusUpdateEvent(
-          slaveId = "", taskId = taskId, taskStatus = state.toString, message = "", appId = appId, host = "",
-          ipAddresses = None, ports = Nil, version = "version"
-        )
-      log.info("publish {} on the event stream", statusUpdateEvent)
-      system.eventStream.publish(statusUpdateEvent)
+
+    def publishInstanceChanged(instanceChange: InstanceChange): Unit = {
+      val instanceChangedEvent = InstanceChanged(instanceChange)
+      log.info("publish {} on the event stream", instanceChangedEvent)
+      system.eventStream.publish(instanceChangedEvent)
     }
   }
 }

@@ -57,7 +57,10 @@ object TaskStatusUpdateTestHelper extends InstanceConversions {
 
   def taskExpungeFor(task: Task, taskStatus: InstanceStatus, mesosStatus: TaskStatus, timestamp: Timestamp = defaultTimestamp) = {
     val operation = InstanceUpdateOperation.MesosUpdate(task, taskStatus, mesosStatus, timestamp)
-    val effect = InstanceUpdateEffect.Expunge(task)
+    val effect = operation.instance.update(operation)
+    if (!effect.isInstanceOf[InstanceUpdateEffect.Expunge]) {
+      throw new RuntimeException(s"Applying a MesosUpdate with status $taskStatus did not result in an Expunge effect but in a $effect")
+    }
     TaskStatusUpdateTestHelper(operation, effect)
   }
 
@@ -87,6 +90,19 @@ object TaskStatusUpdateTestHelper extends InstanceConversions {
 
   def lost(reason: Reason, task: Task = defaultTask, maybeMessage: Option[String] = None) = {
     val mesosStatus = makeTaskStatus(task.taskId, TaskState.TASK_LOST, maybeReason = Some(reason), maybeMessage = maybeMessage)
+    val marathonTaskStatus = MarathonTaskStatus(mesosStatus)
+
+    marathonTaskStatus match {
+      case _: InstanceStatus.Terminal =>
+        taskExpungeFor(task, marathonTaskStatus, mesosStatus)
+
+      case _ =>
+        taskUpdateFor(task, marathonTaskStatus, mesosStatus)
+    }
+  }
+
+  def unreachable(task: Task = defaultTask) = {
+    val mesosStatus = makeTaskStatus(task.taskId, TaskState.TASK_UNREACHABLE)
     val marathonTaskStatus = MarathonTaskStatus(mesosStatus)
 
     marathonTaskStatus match {
